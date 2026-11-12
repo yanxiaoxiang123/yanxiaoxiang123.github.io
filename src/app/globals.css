@@ -1920,3 +1920,273 @@ a {
     font-size: 14px;
   }
 }
+
+/* ---------- about: the plane drags a string of cards ---------- */
+.flight {
+  position: relative;
+  height: 320vh;
+  background: radial-gradient(60% 26% at 82% 4%, rgba(43, 127, 216, 0.08), transparent 60%),
+    radial-gradient(50% 22% at 10% 72%, rgba(244, 215, 88, 0.12), transparent 60%), var(--cream);
+}
+.flight-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+}
+.fl-sky {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(70% 40% at 20% 0%, rgba(43, 127, 216, 0.07), transparent 65%),
+    radial-gradient(50% 35% at 85% 85%, rgba(244, 215, 88, 0.12), transparent 65%);
+}
+.fl-deco {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.fl-deco-top {
+  top: -26px;
+  right: -6%;
+  width: 50%;
+  opacity: 0.4;
+}
+.fl-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.fl-line path {
+  stroke: rgba(43, 127, 216, 0.55);
+  stroke-width: 2.2;
+  stroke-dasharray: 1 8;
+  stroke-linecap: round;
+}
+.fl-plane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 132px;
+  height: auto;
+  margin-left: -66px;
+  margin-top: -38px;
+  z-index: 30;
+  will-change: transform;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 12px rgba(26, 26, 46, 0.14));
+}
+.fl-stop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 380px;
+  margin-left: -190px;
+  transform-origin: 50% 0;
+  will-change: transform;
+  z-index: 5;
+  opacity: 0;
+}
+.flight.has-js .fl-stop,
+.flight.is-static .fl-stop {
+  opacity: 1;
+}
+.fl-card {
+  position: relative;
+  width: 100%;
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+  background: rgba(254, 252, 246, 0.97);
+  border: 1px solid rgba(26, 26, 46, 0.08);
+  box-shadow: 0 16px 36px rgba(26, 26, 46, 0.12);
+  transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
+}
+.flight.is-settled .fl-stop {
+  cursor: pointer;
+}
+.flight.is-settled .fl-stop:hover {
+  z-index: 90 !important;
+}
+.flight.is-settled .fl-stop:hover .fl-card {
+  transform: translateY(-42px) scale(1.04);
+  box-shadow: 0 30px 60px rgba(26, 26, 46, 0.2);
+  border-color: rgba(43, 127, 216, 0.24);
+}
+.fl-pin {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  margin-left: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 2px solid rgba(43, 127, 216, 0.55);
+  box-shadow: 0 0 0 3px rgba(254, 252, 246, 0.9);
+  z-index: 3;
+}
+.fl-title {
+  font-family: var(--serif-sc);
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.25;
+  margin: 4px 0 8px;
+}
+.fl-title.sm {
+  font-size: 1.15rem;
+}
+.fl-body {
+  color: var(--ink-light);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.fl-list,
+.fl-timeline,
+.fl-now {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fl-list li,
+.fl-timeline li,
+.fl-now li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-left: 3px solid rgba(43, 127, 216, 0.45);
+  padding-left: 10px;
+}
+.fl-list li:nth-child(2),
+.fl-timeline li:nth-child(2) {
+  border-left-color: rgba(244, 215, 88, 0.85);
+}
+.fl-list li:nth-child(3),
+.fl-timeline li:nth-child(3) {
+  border-left-color: rgba(232, 74, 95, 0.5);
+}
+.fl-list b,
+.fl-now b,
+.fl-timeline b {
+  font-family: var(--serif-sc);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.fl-list span,
+.fl-now span,
+.fl-timeline span {
+  color: var(--ink-light);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.fl-timeline .fl-date {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--blue);
+}
+.fl-card .todo-note {
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.fl-paper {
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  width: min(1080px, 86vw);
+  height: 90%;
+  z-index: 0;
+  opacity: 0;
+  background: #fffdf7;
+  border: 1px solid rgba(26, 26, 46, 0.12);
+  border-radius: 4px;
+  box-shadow: 0 26px 50px rgba(26, 26, 46, 0.16);
+  transform: translateX(-50%) rotate(-1.6deg);
+}
+.fl-paper-line {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 82%;
+  height: 2px;
+  background: rgba(26, 26, 46, 0.09);
+}
+.fl-paper-line.short {
+  right: 30%;
+  top: 88%;
+}
+.fl-paper-fold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 36px 36px;
+  border-color: transparent transparent rgba(26, 26, 46, 0.08) transparent;
+}
+
+.flight.is-static {
+  height: auto;
+  padding: 96px 24px 40px;
+}
+.flight.is-static .flight-sticky {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+.flight.is-static .fl-sky,
+.flight.is-static .fl-deco,
+.flight.is-static .fl-line,
+.flight.is-static .fl-plane,
+.flight.is-static .fl-paper {
+  display: none;
+}
+.flight.is-static .fl-stop {
+  position: static;
+  width: min(680px, 100%);
+  margin: 0 auto 30px;
+  transform: none;
+}
+.flight.is-static .fl-card {
+  box-shadow: none;
+}
+
+@media (width <= 768px) {
+  .flight {
+    height: 320vh;
+  }
+  .fl-stop {
+    width: 86vw;
+    margin-left: -43vw;
+  }
+  .fl-plane {
+    width: 96px;
+    margin-left: -48px;
+    margin-top: -28px;
+  }
+  .fl-paper {
+    width: 92vw;
+    height: 88%;
+    top: 6%;
+  }
+  .fl-card {
+    padding: 16px 16px 18px;
+  }
+  .fl-title {
+    font-size: 1.15rem;
+  }
+  .fl-title.sm {
+    font-size: 1.02rem;
+  }
+  .fl-body,
+  .fl-list span,
+  .fl-now span,
+  .fl-timeline span {
+    font-size: 11px;
+  }
+}

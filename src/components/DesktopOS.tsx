@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { about, contactInfo, desktopMenu, profile, projects, research } from '@/data/content';
+import { about, contactInfo, desktopMenu, profile, projects, repoDetails, research } from '@/data/content';
 import Xiaojing, { type PetEvent, type PetEventKind } from './Xiaojing';
 
 type WinId =
@@ -12,7 +12,8 @@ type WinId =
   | 'sayhi'
   | 'backing'
   | 'patent'
-  | 'logistics';
+  | 'logistics'
+  | 'repo';
 
 type IconDef = {
   id: string;
@@ -33,13 +34,6 @@ const ICONS: IconDef[] = [
   { id: 'patent', label: '专利审核', kind: 'app', emoji: '📄', win: 'patent' },
   { id: 'logistics', label: '货量预测', kind: 'app', emoji: '📦', win: 'logistics' },
   { id: 'sayhi', label: 'Say Hi.app', kind: 'app', emoji: '✉️', win: 'sayhi' },
-  {
-    id: 'github',
-    label: 'github.com',
-    kind: 'app',
-    emoji: '🐙',
-    external: profile.github,
-  },
 ];
 
 /* Deterministic star field so server and client agree. */
@@ -155,6 +149,38 @@ function Window({
   );
 }
 
+function RepoWindow({ name }: { name: string }) {
+  const r = repoDetails.find((x) => x.name === name);
+  if (!r) return null;
+  return (
+    <>
+      <div className="win-title">{r.name}</div>
+      <div className="win-sub">
+        {r.meta}
+        {r.stars > 0 ? ` · ★ ${r.stars}` : ''}
+      </div>
+      <p className="win-body-text">{r.summary}</p>
+      <div className="win-sub" style={{ marginBottom: 8 }}>
+        {r.stack}
+      </div>
+      <ul className="win-list">
+        {r.points.map((pt) => (
+          <li key={pt}>{pt}</li>
+        ))}
+      </ul>
+      <div className="win-links" style={{ marginTop: 16 }}>
+        <a
+          href={`https://github.com/yanxiaoxiang123/${r.name}`}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          在 GitHub 打开 →
+        </a>
+      </div>
+    </>
+  );
+}
+
 function ProjectWindow({ slug }: { slug: string }) {
   const p = projects.find((x) => x.slug === slug);
   if (!p) return null;
@@ -178,7 +204,9 @@ function ProjectWindow({ slug }: { slug: string }) {
 }
 
 export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
-  const [wins, setWins] = useState<{ id: WinId; x: number; y: number; z: number }[]>([]);
+  const [wins, setWins] = useState<
+    { key: string; id: WinId; repo?: string; x: number; y: number; z: number }[]
+  >([]);
   const zRef = useRef(100);
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
   const [petEvent, setPetEvent] = useState<PetEvent | null>(null);
@@ -215,15 +243,36 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     const gapY = mobile ? 12 : 20;
     const right = mobile ? 8 : 26;
     const top0 = mobile ? 12 : 24;
-    return ICONS.map((icon, i) => {
+    const out: { id: string; x: number; y: number }[] = [];
+
+    ICONS.forEach((icon, i) => {
       const col = i % 3;
       const row = Math.floor(i / 3);
-      return {
+      out.push({
         id: icon.id,
         x: Math.max(0, size.w - right - tileW - col * (tileW + gapX)),
         y: top0 + row * (tileH + gapY),
-      };
+      });
     });
+
+    /* repository files: four compact columns under the apps */
+    const repoW = mobile ? 58 : 64;
+    const repoH = mobile ? 72 : 78;
+    const repoGapX = mobile ? 3 : 6;
+    const repoGapY = mobile ? 6 : 8;
+    const rows = Math.ceil(ICONS.length / 3);
+    const startY = top0 + rows * (tileH + gapY) + (mobile ? 12 : 22);
+    repoDetails.forEach((r, i) => {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      out.push({
+        id: 'repo:' + r.name,
+        x: Math.max(0, size.w - right - repoW - col * (repoW + repoGapX)),
+        y: startY + row * (repoH + repoGapY),
+      });
+    });
+
+    return out;
   }, [size.w]);
 
   const posOf = (id: string) => {
@@ -244,34 +293,43 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 750);
   };
 
-  const openWin = useCallback((id: WinId) => {
-    zRef.current += 1;
-    const z = zRef.current;
-    tellPet('open');
-    setWins((prev) => {
-      const found = prev.find((w) => w.id === id);
-      if (found) return prev.map((w) => (w.id === id ? { ...w, z } : w));
-      const n = prev.length;
-      return [
-        ...prev,
-        {
-          id,
-          z,
-          x: Math.max(24, Math.min(190 + n * 44, window.innerWidth - 560)),
-          y: Math.max(48, 66 + n * 34),
-        },
-      ];
-    });
-  }, [tellPet]);
+  const openWindow = useCallback(
+    (id: WinId, repo?: string) => {
+      const key = repo ? `${id}:${repo}` : id;
+      zRef.current += 1;
+      const z = zRef.current;
+      tellPet('open');
+      setWins((prev) => {
+        const found = prev.find((w) => w.key === key);
+        if (found) return prev.map((w) => (w.key === key ? { ...w, z } : w));
+        const n = prev.length;
+        return [
+          ...prev,
+          {
+            key,
+            id,
+            repo,
+            z,
+            x: Math.max(24, Math.min(190 + n * 44, window.innerWidth - 560)),
+            y: Math.max(48, 66 + n * 34),
+          },
+        ];
+      });
+    },
+    [tellPet],
+  );
 
-  const closeWin = (id: WinId) => {
-    setWins((prev) => prev.filter((w) => w.id !== id));
+  const openWin = (id: WinId) => openWindow(id);
+  const openRepo = (name: string) => openWindow('repo', name);
+
+  const closeWin = (key: string) => {
+    setWins((prev) => prev.filter((w) => w.key !== key));
     tellPet('close');
   };
-  const focusWin = (id: WinId) => {
+  const focusWin = (key: string) => {
     zRef.current += 1;
     const z = zRef.current;
-    setWins((prev) => prev.map((w) => (w.id === id ? { ...w, z } : w)));
+    setWins((prev) => prev.map((w) => (w.key === key ? { ...w, z } : w)));
   };
 
   const iconClick = (icon: IconDef) => {
@@ -282,23 +340,23 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     if (icon.win) openWin(icon.win);
   };
 
-  const startDrag = (e: React.PointerEvent<HTMLButtonElement>, icon: IconDef) => {
+  const startDrag = (e: React.PointerEvent<HTMLButtonElement>, iconId: string) => {
     suppressClick.current = false;
-    const p = posOf(icon.id);
+    const p = posOf(iconId);
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     } catch {
       /* synthetic pointer events have no capture target */
     }
     dragRef.current = {
-      id: icon.id,
+      id: iconId,
       sx: e.clientX,
       sy: e.clientY,
       ox: p.x,
       oy: p.y,
       moved: false,
     };
-    setActiveIcon(icon.id);
+    setActiveIcon(iconId);
     tellPet('drag');
   };
 
@@ -325,7 +383,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     setActiveIcon(null);
   };
 
-  const content = useMemo<Record<WinId, React.ReactNode>>(
+  const content = useMemo<Partial<Record<WinId, React.ReactNode>>>(
     () => ({
       about: (
         <>
@@ -472,7 +530,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
                   visibility: size.w ? 'visible' : 'hidden',
                   zIndex: activeIcon === icon.id ? 30 : 2,
                 }}
-                onPointerDown={(e) => startDrag(e, icon)}
+                onPointerDown={(e) => startDrag(e, icon.id)}
                 onPointerMove={moveDrag}
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
@@ -495,21 +553,53 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
               </button>
             );
           })}
+          {repoDetails.map((r) => {
+            const id = 'repo:' + r.name;
+            const p = posOf(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`dicon dicon-repo${activeIcon === id ? ' dragging' : ''}`}
+                style={{
+                  left: p.x,
+                  top: p.y,
+                  visibility: size.w ? 'visible' : 'hidden',
+                  zIndex: activeIcon === id ? 30 : 2,
+                }}
+                onPointerDown={(e) => startDrag(e, id)}
+                onPointerMove={moveDrag}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
+                  openRepo(r.name);
+                }}
+              >
+                <span className="dicon-art file" data-ext={r.ext} />
+                <span className="dicon-label">{r.name}</span>
+              </button>
+            );
+          })}
         </div>
 
         <Xiaojing area={size} event={petEvent} />
 
         {wins.map((w) => (
           <Window
-            key={w.id}
+            key={w.key}
             id={w.id}
-            title={w.id}
+            title={w.repo ?? w.id}
             initial={{ x: w.x, y: w.y }}
             z={w.z}
-            onClose={() => closeWin(w.id)}
-            onFocus={() => focusWin(w.id)}
+            onClose={() => closeWin(w.key)}
+            onFocus={() => focusWin(w.key)}
           >
-            {content[w.id]}
+            {w.id === 'repo' && w.repo ? <RepoWindow name={w.repo} /> : (content[w.id] ?? null)}
           </Window>
         ))}
 

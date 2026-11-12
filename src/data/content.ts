@@ -179,6 +179,247 @@ export const toolkitFolders = [
   },
 ];
 
+/* ---------- GitHub 仓库（桌面图标 + 窗口） ---------- */
+
+export type RepoDetail = {
+  name: string;
+  lang: string;
+  ext: string;
+  stars: number;
+  meta: string;
+  summary: string;
+  stack: string;
+  points: string[];
+};
+
+export const repoDetails: RepoDetail[] = [
+  {
+    name: 'dl-reproducibility-skills',
+    lang: 'Python',
+    ext: 'MD',
+    stars: 3,
+    meta: '开源仓库 · Skill 工具包 · v3.3',
+    summary:
+      '面向 PyTorch / TensorFlow 研究者的深度学习可复现工具包。v3.3 把长教程改成「按需加载 references」的轻量 skill 结构，减少上下文占用。',
+    stack: 'Markdown Skill · PyTorch · TensorFlow · CUDA 12.8',
+    points: [
+      '覆盖种子与确定性、梯度累积、评估 loss、benchmark 吞吐量等复现细节。',
+      '按需引用 references，提升 agent 执行稳定性，兼容 Python 3.8+ 与 Windows。',
+      'MIT 许可证，附测试过的显卡与框架版本。',
+    ],
+  },
+  {
+    name: 'trademarksearch',
+    lang: 'Jupyter',
+    ext: 'IPY',
+    stars: 2,
+    meta: '开源仓库 · Web 应用',
+    summary: '基于 Flask 的商标查询系统，提供商标信息检索、用户管理与管理员后台。',
+    stack: 'Flask · SQLite · Jinja2 · HTML/CSS/JS',
+    points: [
+      '支持多维度商标查询与结果管理。',
+      '用户注册登录、权限管理与后台维护。',
+      '响应式界面，支持多设备访问。',
+    ],
+  },
+  {
+    name: 'backing',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 1,
+    meta: '开源仓库 · 全栈',
+    summary:
+      'React + FastAPI 的股票研究与回测系统：数据服务、策略回测、AI 分析与实时行情串成一条链路。',
+    stack: 'React 18 · TypeScript · Vite · ECharts · FastAPI · SQLAlchemy · DeepSeek',
+    points: [
+      'K 线、技术指标与股票列表同步的数据服务。',
+      '多策略信号生成、统一回测与参数优化，全市场选股器。',
+      'DeepSeek 多阶段 AI 分析（技术面 / 消息面 / 风险 / 决策）与 HTTP + WebSocket 实时行情。',
+    ],
+  },
+  {
+    name: 'patent',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 1,
+    meta: '开源仓库 · AI 应用',
+    summary:
+      'IPRS 智能专利审查平台：自动做形式检查、逻辑分析与合规提示，帮助专利代理人提高审查效率。',
+    stack: 'FastAPI · Vue3 · Ollama (Qwen3) · SSE · Redis · JWT',
+    points: [
+      '解析 docx / pdf 专利文档并智能分段。',
+      '四套规则模板（普通案、专利指引、项目案、IPC 分类）驱动审查。',
+      'SSE 流式输出、JWT 认证与 Redis 限流。',
+    ],
+  },
+  {
+    name: 'yan-skills',
+    lang: 'JavaScript',
+    ext: 'JS',
+    stars: 1,
+    meta: '开源仓库 · Agent 工作流',
+    summary:
+      '面向 Claude Code 与 OpenCode 的轻量工程技能工作流：默认只在任务明确匹配时加载一个技能，不机械调用。',
+    stack: 'JavaScript · Claude Code · OpenCode',
+    points: [
+      '完整流程从 grilling、specification、planning 到 TDD、独立 review 与验证。',
+      'careful 模式对递归删除、强推、清库等危险命令要求单次确认。',
+      '支持工作树隔离与 single / adaptive / delegated 三种执行策略。',
+    ],
+  },
+  {
+    name: 'ai-stock-analysis',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 1,
+    meta: '开源仓库 · 数据分析',
+    summary: 'A 股数据分析与选股实验：行情整理、技术指标与筛选逻辑的研究脚本。',
+    stack: 'Python · Pandas · 行情数据',
+    points: ['行情数据获取与清洗。', '技术指标计算与选股实验。', '研究过程与结果留档。'],
+  },
+  {
+    name: 'love_by_code',
+    lang: 'TypeScript',
+    ext: 'TS',
+    stars: 1,
+    meta: '开源仓库 · 互动叙事',
+    summary: '像素风互动叙事游戏「代码书心意」：四幕故事，从初遇走到告白。',
+    stack: 'React 19 · TypeScript · Vite · Tailwind CSS',
+    points: [
+      '四幕主题关卡，收集角色、与物体互动推进剧情。',
+      '像素美术与对话叙事。',
+      '基于 Vite 的轻量构建。',
+    ],
+  },
+  {
+    name: 'todo-app',
+    lang: 'TypeScript',
+    ext: 'TS',
+    stars: 1,
+    meta: '开源仓库 · 桌面应用',
+    summary: '一个「凭感觉写」的 Todo 应用，用 Tauri 打包成桌面端，功能完整、随手可用。',
+    stack: 'React 18 · TypeScript · Tauri 2.0 · Zustand · Tailwind · shadcn/ui',
+    points: [
+      'Tauri 2.0 桌面壳 + React 18 前端。',
+      'Zustand 状态管理与 shadcn/ui 组件。',
+      'Vite 构建、Tailwind 样式。',
+    ],
+  },
+  {
+    name: 'ecg-pvc-research-archive',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 0,
+    meta: '研究归档 · 代码与样本保留权利',
+    summary:
+      '心电 PVC 弱标签分类、I 导联极性代理任务与 Qwen3-VL 报告微调的研究归档；代码与真实样本保留全部权利。',
+    stack: 'Python · PyTorch · ConvNeXt · Qwen3-VL LoRA',
+    points: [
+      '94 份历史实验脚本与整理后的参数化入口。',
+      '18 例经提供方许可公开的真实心电样本，九个来源类别各 2 例。',
+      '覆盖波形 / ConvNeXt 分类与语言侧 LoRA 微调，18 例不构成临床基准。',
+    ],
+  },
+  {
+    name: 'Qwen-LSTM-Drilling-Trajectory',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 0,
+    meta: '论文官方代码 · 时序预测',
+    summary:
+      '把微调后 Qwen 的地质语义与 LSTM 序列编码结合，做随钻轨迹的深度向前在线预测。',
+    stack: 'Python · Qwen · LSTM · H5',
+    points: [
+      '按 1 ft 深度网格聚合，在线训练与评估井斜、方位。',
+      '提供跨井推理与一键实验脚本。',
+      '含 CPU 可跑的快速功能测试。',
+    ],
+  },
+  {
+    name: 'StockLSTM_FinanceLlama',
+    lang: 'Python',
+    ext: 'PY',
+    stars: 0,
+    meta: '开源仓库 · 金融时序',
+    summary: 'Qwen-LSTM 混合模型在金融序列上的实现：训练、评估、回测与预测。',
+    stack: 'Python · PyTorch · LSTM · FinanceLlama',
+    points: [
+      '模块化的数据、模型、训练与评估脚本。',
+      '回测策略与风险指标。',
+      '未来预测入口与快速导入测试。',
+    ],
+  },
+  {
+    name: 'clawd-mochi-pet',
+    lang: 'C',
+    ext: 'C',
+    stars: 0,
+    meta: '开源仓库 · 硬件',
+    summary:
+      '基于 ESP32-C3 的桌面小宠物（fork 自 Clawd Mochi），把网页控制器换成会自己活动、有情绪的宠物。',
+    stack: 'C · ESP32-C3 · 1.54" TFT',
+    points: [
+      '1.54 寸彩色屏上跑自主动画与情绪变化。',
+      '约 6–8 美元、1 小时可完成的入门硬件项目。',
+      '附 3D 打印外壳，独立同人项目。',
+    ],
+  },
+  {
+    name: 'campusshop-yanxiaoxiang123',
+    lang: 'Java',
+    ext: 'JAVA',
+    stars: 0,
+    meta: '课程项目 · 测试教学',
+    summary:
+      '「AI 辅助软件测试」课程的教学项目：一个故意留有缺陷的校园商城，提供 C# 与 Java 两套等价实现。',
+    stack: 'Java · Spring Boot · C# .NET 10 · xUnit',
+    points: [
+      '计价、优惠券、下单、登录等业务模块。',
+      'C#（.NET 10）与 Java（JDK 21 + Spring Boot）双版本。',
+      '配套需求文档与单元测试，用来练习找缺陷。',
+    ],
+  },
+  {
+    name: 'daily-stock-analysis',
+    lang: '—',
+    ext: 'MD',
+    stars: 0,
+    meta: '个人脚本 · 日常复盘',
+    summary: '每天记录行情并做简单复盘的个人脚本集合。',
+    stack: '脚本 · 行情数据',
+    points: ['抓取当日行情数据。', '整理成可回顾的每日记录。'],
+  },
+  {
+    name: 'yanxx-portfolio',
+    lang: 'TypeScript',
+    ext: 'TS',
+    stars: 0,
+    meta: '上一版主页 · Next.js 静态站',
+    summary:
+      '上一版中英双语个人主页：纸飞机滚动的视觉概念，包含项目案例与研究代码入口。',
+    stack: 'Next.js 16 · React · TypeScript · GSAP',
+    points: [
+      '中英显式路由与静态导出。',
+      'GSAP 滚动动效与项目详情页。',
+      '无后端、数据库或运行时密钥。',
+    ],
+  },
+  {
+    name: 'yanxiaoxiang123.github.io',
+    lang: 'TypeScript',
+    ext: 'TS',
+    stars: 0,
+    meta: '现在这个站点 · 桌面 OS',
+    summary: '你现在看到的这个站点：终端开场、蓝色桌面与项目页。',
+    stack: 'Next.js 16 · React · TypeScript · 静态导出',
+    points: [
+      '终端逐字开场 + 进度条，缩放进入桌面。',
+      '桌面图标可拖拽，小镜会自己走动。',
+      '项目页含贴纸弹出与纸文件夹动效。',
+    ],
+  },
+];
+
 export const research = [
   {
     title: '钻井轨迹预测',

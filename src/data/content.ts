@@ -183,6 +183,7 @@ export const toolkitFolders = [
 
 export type RepoDetail = {
   name: string;
+  icon: string;
   lang: string;
   ext: string;
   stars: number;
@@ -195,6 +196,7 @@ export type RepoDetail = {
 export const repoDetails: RepoDetail[] = [
   {
     name: 'dl-reproducibility-skills',
+    icon: 'repro',
     lang: 'Python',
     ext: 'MD',
     stars: 3,
@@ -210,6 +212,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'trademarksearch',
+    icon: 'trademark',
     lang: 'Jupyter',
     ext: 'IPY',
     stars: 2,
@@ -224,6 +227,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'yan-skills',
+    icon: 'skills',
     lang: 'JavaScript',
     ext: 'JS',
     stars: 1,
@@ -239,6 +243,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'ai-stock-analysis',
+    icon: 'aistock',
     lang: 'Python',
     ext: 'PY',
     stars: 1,
@@ -249,6 +254,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'love_by_code',
+    icon: 'love',
     lang: 'TypeScript',
     ext: 'TS',
     stars: 1,
@@ -263,6 +269,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'todo-app',
+    icon: 'todo',
     lang: 'TypeScript',
     ext: 'TS',
     stars: 1,
@@ -277,6 +284,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'StockLSTM_FinanceLlama',
+    icon: 'stocklstm',
     lang: 'Python',
     ext: 'PY',
     stars: 0,
@@ -291,6 +299,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'clawd-mochi-pet',
+    icon: 'pet',
     lang: 'C',
     ext: 'C',
     stars: 0,
@@ -306,6 +315,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'campusshop-yanxiaoxiang123',
+    icon: 'shop',
     lang: 'Java',
     ext: 'JAVA',
     stars: 0,
@@ -321,6 +331,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'daily-stock-analysis',
+    icon: 'daily',
     lang: '—',
     ext: 'MD',
     stars: 0,
@@ -331,6 +342,7 @@ export const repoDetails: RepoDetail[] = [
   },
   {
     name: 'yanxx-portfolio',
+    icon: 'portfolio',
     lang: 'TypeScript',
     ext: 'TS',
     stars: 0,

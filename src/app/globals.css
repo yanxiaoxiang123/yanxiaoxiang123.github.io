@@ -715,6 +715,12 @@ a {
   width: 72px;
   padding: 6px 2px;
 }
+.dicon-repo-img {
+  width: 44px;
+  height: 44px;
+  display: block;
+  pointer-events: none;
+}
 .dicon-repo .dicon-art {
   width: 32px;
   height: 32px;
@@ -1732,6 +1738,10 @@ a {
   .dicon-repo .dicon-art {
     width: 28px;
     height: 28px;
+  }
+  .dicon-repo-img {
+    width: 34px;
+    height: 34px;
   }
   .xiaojing {
     width: 112px;

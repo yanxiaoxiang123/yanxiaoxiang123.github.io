@@ -571,7 +571,13 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
                   openRepo(r.name);
                 }}
               >
-                <span className="dicon-art file" data-ext={r.ext} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="dicon-repo-img"
+                  src={`/images/repos/${r.icon}.png`}
+                  alt=""
+                  draggable={false}
+                />
                 <span className="dicon-label">{r.name}</span>
               </button>
             );

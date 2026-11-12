@@ -242,17 +242,6 @@ export const repoDetails: RepoDetail[] = [
     ],
   },
   {
-    name: 'ai-stock-analysis',
-    icon: 'aistock',
-    lang: 'Python',
-    ext: 'PY',
-    stars: 1,
-    meta: '开源仓库 · 数据分析',
-    summary: 'A 股数据分析与选股实验：行情整理、技术指标与筛选逻辑的研究脚本。',
-    stack: 'Python · Pandas · 行情数据',
-    points: ['行情数据获取与清洗。', '技术指标计算与选股实验。', '研究过程与结果留档。'],
-  },
-  {
     name: 'love_by_code',
     icon: 'love',
     lang: 'TypeScript',
@@ -298,22 +287,6 @@ export const repoDetails: RepoDetail[] = [
     ],
   },
   {
-    name: 'clawd-mochi-pet',
-    icon: 'pet',
-    lang: 'C',
-    ext: 'C',
-    stars: 0,
-    meta: '开源仓库 · 硬件',
-    summary:
-      '基于 ESP32-C3 的桌面小宠物（fork 自 Clawd Mochi），把网页控制器换成会自己活动、有情绪的宠物。',
-    stack: 'C · ESP32-C3 · 1.54" TFT',
-    points: [
-      '1.54 寸彩色屏上跑自主动画与情绪变化。',
-      '约 6–8 美元、1 小时可完成的入门硬件项目。',
-      '附 3D 打印外壳，独立同人项目。',
-    ],
-  },
-  {
     name: 'campusshop-yanxiaoxiang123',
     icon: 'shop',
     lang: 'Java',
@@ -328,17 +301,6 @@ export const repoDetails: RepoDetail[] = [
       'C#（.NET 10）与 Java（JDK 21 + Spring Boot）双版本。',
       '配套需求文档与单元测试，用来练习找缺陷。',
     ],
-  },
-  {
-    name: 'daily-stock-analysis',
-    icon: 'daily',
-    lang: '—',
-    ext: 'MD',
-    stars: 0,
-    meta: '个人脚本 · 日常复盘',
-    summary: '每天记录行情并做简单复盘的个人脚本集合。',
-    stack: '脚本 · 行情数据',
-    points: ['抓取当日行情数据。', '整理成可回顾的每日记录。'],
   },
   {
     name: 'yanxx-portfolio',

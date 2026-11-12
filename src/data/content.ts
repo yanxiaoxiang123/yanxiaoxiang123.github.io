@@ -56,6 +56,7 @@ export type Project = {
   stack: string;
   summary: string;
   points: string[];
+  stats: [string, string][];
   accent: 'blue' | 'yellow' | 'red';
   icon: string;
 };
@@ -75,6 +76,11 @@ export const projects: Project[] = [
       '17 个量化工具的工具网关，白名单、权限校验、参数验证与调用审计约束 LLM 行为。',
       '13 类量化策略的统一信号与回测框架，适配 A 股 T+1、涨跌停与交易费用规则。',
     ],
+    stats: [
+      ['17', '工具网关'],
+      ['13', '量化策略'],
+      ['534', '测试通过'],
+    ],
     accent: 'blue',
     icon: '📈',
   },
@@ -91,6 +97,11 @@ export const projects: Project[] = [
       '审核规则 JSON 配置化，内置 4 套模板，支持规则零代码调整。',
       '令牌认证、Redis 限流、会话吊销与服务故障转移，提升系统稳定性。',
       '前后端分离与双环境部署，Nginx 统一代理，requestAnimationFrame 批量更新流式内容。',
+    ],
+    stats: [
+      ['4', '规则模板'],
+      ['3', '端统一'],
+      ['20+', '并发会话'],
     ],
     accent: 'yellow',
     icon: '📄',
@@ -109,9 +120,36 @@ export const projects: Project[] = [
       'P10/P50/P90 分位数预测与共形校准，提供不确定性区间。',
       '独立测试线路级 WAPE 7.32%，较星期基线误差降低约 27%。',
     ],
+    stats: [
+      ['7.32%', '线路 WAPE'],
+      ['27%', '误差下降'],
+      ['600', '条线路'],
+    ],
     accent: 'red',
     icon: '📦',
   },
+];
+
+/* ---------- 项目页：Vibe Coding 与 Toolkit ---------- */
+
+export const vibeCards = [
+  { emoji: '⌘', title: 'Claude Code', note: 'Agent 结对写代码', x: 4, y: 8, r: -5 },
+  { emoji: '✦', title: 'Codex', note: '并行改代码', x: 27, y: 2, r: 3 },
+  { emoji: '◎', title: 'LangGraph', note: '多 Agent 编排', x: 48, y: 24, r: -3 },
+  { emoji: '⚡', title: 'FastAPI + SSE', note: '流式后端', x: 71, y: 6, r: 4 },
+  { emoji: '▤', title: 'Vue3 / React', note: '前端交互', x: 6, y: 56, r: 2 },
+  { emoji: '◈', title: 'LightGBM', note: '时序预测', x: 31, y: 62, r: -4 },
+  { emoji: '◐', title: 'Qwen2.5-VL', note: '多模态评测', x: 56, y: 56, r: 3 },
+  { emoji: '✎', title: 'Optuna', note: '调参与复现', x: 78, y: 48, r: -2 },
+];
+
+export const toolkit = [
+  { src: '/images/toolkit/farther.webp', title: 'Farther in', meta: '拼贴 · 2025' },
+  { src: '/images/toolkit/pause.webp', title: 'a place to pause', meta: '拼贴 · 2025' },
+  { src: '/images/toolkit/last-light.webp', title: 'Last light', meta: '拼贴 · 2025' },
+  { src: '/images/toolkit/looking-up.webp', title: 'looking up', meta: '拼贴 · 2025' },
+  { src: '/images/toolkit/lake.webp', title: '湖边', meta: '照片 · 2025' },
+  { src: '/images/toolkit/dusk.webp', title: '傍晚', meta: '照片 · 2025' },
 ];
 
 export const research = [

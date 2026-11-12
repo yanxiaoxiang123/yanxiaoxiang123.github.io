@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+dist/
+
+# typescript
+*.tsbuildinfo
+
+# taste-skill working files
+.taste-skill/
+
+# local-only private material (resumes, photos, agent config)
+docs/简历/
+docs/照片/
+.claude/
+
+# generated image masters
+generated-images/
+
+# env
+.env*.local
+
+# misc
+.DS_Store
+*.log

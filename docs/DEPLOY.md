@@ -44,28 +44,21 @@ mkdir -p /var/www/yanxx && rm -rf /var/www/yanxx/* && tar -xzf /tmp/out.tgz -C /
 ```
 
 
-
-前提：服务器已装 `nginx`、`rsync`，本机可通过 SSH 免密登录。
-
-### 1. 本机构建并同步
-
-```bash
-DEPLOY_HOST=root@your-server.com DEPLOY_PATH=/var/www/yanxx ./scripts/deploy.sh
-```
-
-Windows 下可用 Git Bash 运行，或改用下方的手动步骤。
-
-### 2. Nginx 配置
-
-`/etc/nginx/conf.d/yanxx.conf`：
+### Nginx 配置示例（已应用在服务器上）
 
 ```nginx
 server {
-    listen 80;
-    server_name your-domain.com;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
 
     root /var/www/yanxx;
     index index.html;
+    charset utf-8;
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
 
     # 静态资源缓存
     location /_next/static/ {

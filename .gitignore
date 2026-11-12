@@ -27,3 +27,6 @@ generated-images/
 # misc
 .DS_Store
 *.log
+
+# scratch dirs
+.tmp-deploy/

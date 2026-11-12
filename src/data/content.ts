@@ -416,6 +416,6 @@ export const goodbye: {
     { cmd: 'fortune', out: '“把想法，做成能用的东西。” — 晏晓翔' },
     { cmd: 'exit', out: 'Process completed', gold: true },
   ],
-  footer: '© 2026 晏晓翔 · Built with AI',
+  footer: '© 2026 晏晓翔',
   back: '回到开始 · Back to Start',
 };

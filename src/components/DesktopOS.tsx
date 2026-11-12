@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { contact, home, profile, projects, research } from '@/data/content';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { about, contactInfo, desktopMenu, profile, projects, research } from '@/data/content';
 
-type WinId = 'about' | 'journey' | 'projects' | 'research' | 'sayhi';
+type WinId =
+  | 'about'
+  | 'journey'
+  | 'projects'
+  | 'research'
+  | 'sayhi'
+  | 'backing'
+  | 'patent'
+  | 'logistics';
 
 type IconDef = {
   id: string;
@@ -11,39 +19,50 @@ type IconDef = {
   kind: 'folder' | 'file' | 'app';
   ext?: string;
   emoji?: string;
-  x: number;
-  y: number;
   win?: WinId;
   external?: string;
 };
 
 const ICONS: IconDef[] = [
-  { id: 'about', label: '关于我.md', kind: 'file', ext: 'md', x: 32, y: 32, win: 'about' },
-  { id: 'journey', label: '经历与教育', kind: 'folder', x: 32, y: 132, win: 'journey' },
-  { id: 'projects', label: '项目文件夹', kind: 'folder', x: 32, y: 232, win: 'projects' },
-  { id: 'research', label: '研究实验', kind: 'folder', x: 32, y: 332, win: 'research' },
-  { id: 'sayhi', label: 'Say Hi.app', kind: 'app', emoji: '✉️', x: 132, y: 32, win: 'sayhi' },
+  { id: 'about', label: '关于我.md', kind: 'file', ext: 'md', win: 'about' },
+  { id: 'journey', label: '经历与教育', kind: 'folder', win: 'journey' },
+  { id: 'projects', label: '项目文件夹', kind: 'folder', win: 'projects' },
+  { id: 'research', label: '研究实验', kind: 'folder', win: 'research' },
+  { id: 'backing', label: 'Backing', kind: 'app', emoji: '📈', win: 'backing' },
+  { id: 'patent', label: '专利审核', kind: 'app', emoji: '📄', win: 'patent' },
+  { id: 'logistics', label: '货量预测', kind: 'app', emoji: '📦', win: 'logistics' },
+  { id: 'sayhi', label: 'Say Hi.app', kind: 'app', emoji: '✉️', win: 'sayhi' },
   {
     id: 'github',
     label: 'github.com',
     kind: 'app',
     emoji: '🐙',
-    x: 132,
-    y: 132,
     external: profile.github,
   },
 ];
 
-const STARS = [
-  { x: '70%', y: '18%', size: 12, op: 0.6, dur: '3.2s', wdur: '4.4s', delay: '0s' },
-  { x: '84%', y: '30%', size: 18, op: 0.5, dur: '4s', wdur: '5s', delay: '0.4s' },
-  { x: '62%', y: '44%', size: 9, op: 0.8, dur: '2.6s', wdur: '3.6s', delay: '0.9s' },
-  { x: '90%', y: '58%', size: 14, op: 0.45, dur: '3.6s', wdur: '4.8s', delay: '1.4s' },
-  { x: '76%', y: '72%', size: 11, op: 0.65, dur: '3s', wdur: '4.2s', delay: '0.2s' },
-  { x: '50%', y: '26%', size: 8, op: 0.7, dur: '2.8s', wdur: '4s', delay: '1.1s' },
-  { x: '57%', y: '82%', size: 13, op: 0.5, dur: '3.4s', wdur: '5.2s', delay: '0.6s' },
-  { x: '94%', y: '12%', size: 10, op: 0.6, dur: '2.9s', wdur: '3.8s', delay: '1.7s' },
-];
+/* Deterministic star field so server and client agree. */
+function makeStars(count: number) {
+  let seed = 20261112;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+  return Array.from({ length: count }, () => {
+    const size = 8 + Math.round(rand() * 12);
+    return {
+      left: `${4 + rand() * 88}%`,
+      top: `${4 + rand() * 88}%`,
+      size,
+      op: 0.25 + rand() * 0.55,
+      dur: `${2.4 + rand() * 2.6}s`,
+      wdur: `${3.4 + rand() * 3}s`,
+      delay: `${rand() * 3}s`,
+    };
+  });
+}
+
+const STARS = makeStars(46);
 
 function Clock() {
   const [time, setTime] = useState('');
@@ -55,34 +74,42 @@ function Clock() {
       );
     };
     tick();
-    const id = setInterval(tick, 30_000);
+    const id = setInterval(tick, 20_000);
     return () => clearInterval(id);
   }, []);
   return <span className="mb-clock">{time || '--:--'}</span>;
 }
 
 function Window({
+  id,
   title,
+  initial,
+  z,
   onClose,
+  onFocus,
   children,
-  initial = { x: 320, y: 80 },
 }: {
+  id: WinId;
   title: string;
+  initial: { x: number; y: number };
+  z: number;
   onClose: () => void;
+  onFocus: () => void;
   children: React.ReactNode;
-  initial?: { x: number; y: number };
 }) {
   const [pos, setPos] = useState(initial);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    onFocus();
     drag.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!drag.current) return;
-    const x = Math.max(8, Math.min(window.innerWidth - 200, e.clientX - drag.current.dx));
-    const y = Math.max(36, Math.min(window.innerHeight - 80, e.clientY - drag.current.dy));
+    const w = Math.min(520, window.innerWidth * 0.92);
+    const x = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - drag.current.dx));
+    const y = Math.max(36, Math.min(window.innerHeight - 90, e.clientY - drag.current.dy));
     setPos({ x, y });
   };
   const endDrag = () => {
@@ -90,7 +117,14 @@ function Window({
   };
 
   return (
-    <div className="os-window" style={{ left: pos.x, top: pos.y }} role="dialog" aria-label={title}>
+    <div
+      className="os-window"
+      style={{ left: pos.x, top: pos.y, zIndex: z }}
+      role="dialog"
+      aria-label={title}
+      data-win={id}
+      onPointerDown={onFocus}
+    >
       <div
         className="os-dragbar"
         onPointerDown={onPointerDown}
@@ -104,7 +138,10 @@ function Window({
           role="button"
           tabIndex={0}
           aria-label="关闭"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') onClose();
           }}
@@ -117,15 +154,64 @@ function Window({
   );
 }
 
+function ProjectWindow({ slug }: { slug: string }) {
+  const p = projects.find((x) => x.slug === slug);
+  if (!p) return null;
+  return (
+    <>
+      <div className="win-title">{p.title}</div>
+      <div className="win-sub">
+        {p.role} · {p.period}
+      </div>
+      <p className="win-body-text">{p.summary}</p>
+      <div className="win-sub" style={{ marginBottom: 8 }}>
+        {p.stack}
+      </div>
+      <ul className="win-list">
+        {p.points.map((pt) => (
+          <li key={pt}>{pt}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
-  const [open, setOpen] = useState<WinId | null>(null);
+  const [wins, setWins] = useState<{ id: WinId; x: number; y: number; z: number }[]>([]);
+  const zRef = useRef(100);
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
-  const surface = useRef<HTMLDivElement>(null);
+  const sticker = useRef<HTMLDivElement>(null);
 
   const burst = (e: React.MouseEvent) => {
     const id = Date.now() + Math.random();
     setBursts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
-    setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 700);
+    setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 750);
+  };
+
+  const openWin = useCallback((id: WinId) => {
+    zRef.current += 1;
+    const z = zRef.current;
+    setWins((prev) => {
+      const found = prev.find((w) => w.id === id);
+      if (found) return prev.map((w) => (w.id === id ? { ...w, z } : w));
+      const n = prev.length;
+      return [
+        ...prev,
+        {
+          id,
+          z,
+          x: Math.max(24, Math.min(190 + n * 44, window.innerWidth - 560)),
+          y: Math.max(48, 66 + n * 34),
+        },
+      ];
+    });
+  }, []);
+
+  const closeWin = (id: WinId) => setWins((prev) => prev.filter((w) => w.id !== id));
+  const focusWin = (id: WinId) => {
+    zRef.current += 1;
+    const z = zRef.current;
+    setWins((prev) => prev.map((w) => (w.id === id ? { ...w, z } : w)));
   };
 
   const iconClick = (icon: IconDef) => {
@@ -133,10 +219,37 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
       window.open(icon.external, '_blank', 'noopener');
       return;
     }
-    if (icon.win) setOpen(icon.win);
+    if (icon.win) openWin(icon.win);
   };
 
-  const windows = useMemo<Record<WinId, React.ReactNode>>(
+  /* draggable sticker */
+  const stickerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = sticker.current;
+    if (!el) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const rect = el.getBoundingClientRect();
+    const parent = el.parentElement!.getBoundingClientRect();
+    const left = rect.left - parent.left;
+    const top = rect.top - parent.top;
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    const move = (ev: PointerEvent) => {
+      el.style.left = `${Math.max(0, Math.min(parent.width - rect.width, left + ev.clientX - startX))}px`;
+      el.style.top = `${Math.max(0, Math.min(parent.height - rect.height, top + ev.clientY - startY))}px`;
+    };
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  };
+
+  const content = useMemo<Record<WinId, React.ReactNode>>(
     () => ({
       about: (
         <>
@@ -146,9 +259,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
             常州大学计算机硕士在读，探索数据、算法与可用的系统。我的经历横跨数据处理、算法研究、系统开发与交付，
             习惯和 AI Agent 搭档，从需求一路做到能上线的形态。
           </p>
-          <p className="win-body-text">
-            比起给自己一个单一的标签，我更希望通过做过的事，让你认识我。
-          </p>
+          <p className="win-body-text">比起给自己一个单一的标签，我更希望通过做过的事，让你认识我。</p>
           <div className="win-links">
             <a href={`mailto:${profile.email}`}>发送邮件</a>
             <a href={profile.github} target="_blank" rel="noreferrer noopener">
@@ -162,7 +273,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
           <div className="win-title">经历与教育</div>
           <div className="win-sub">~/journey</div>
           <div className="turning-points">
-            {home.timeline.items
+            {about.timeline.items
               .slice()
               .reverse()
               .map((item) => (
@@ -191,22 +302,8 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
               </div>
             ))}
           </div>
-          <div className="win-links" style={{ marginTop: 20 }}>
-            <button
-              type="button"
-              className="win-link-btn"
-              onClick={onGoWorks}
-              style={{
-                background: 'var(--blue)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 999,
-                padding: '9px 18px',
-                fontFamily: 'var(--mono)',
-                fontSize: 12,
-                cursor: 'pointer',
-              }}
-            >
+          <div className="win-links" style={{ marginTop: 18 }}>
+            <button type="button" className="win-link" onClick={onGoWorks}>
               打开项目页 →
             </button>
           </div>
@@ -232,20 +329,21 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
         <>
           <div className="win-title">Say Hi</div>
           <div className="win-sub">{'// 聊聊新的可能'}</div>
-          <p className="win-body-text">
-            关于项目、研究或工作机会，欢迎写信，或到 GitHub 找我。
-          </p>
+          <p className="win-body-text">关于项目、研究或工作机会，欢迎写信，或到 GitHub 找我。</p>
           <div className="win-links">
-            <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            <a href={contact.github} target="_blank" rel="noreferrer noopener">
+            <a href={`mailto:${profile.email}`}>{profile.email}</a>
+            <a href={profile.github} target="_blank" rel="noreferrer noopener">
               github.com/yanxiaoxiang123
             </a>
           </div>
           <p style={{ color: 'var(--ink-faint)', marginTop: 22, fontSize: 12, fontStyle: 'italic' }}>
-            {contact.quote}
+            {contactInfo.quote}
           </p>
         </>
       ),
+      backing: <ProjectWindow slug="backing" />,
+      patent: <ProjectWindow slug="patent" />,
+      logistics: <ProjectWindow slug="logistics" />,
     }),
     [onGoWorks],
   );
@@ -253,21 +351,24 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   return (
     <div className="desktop">
       <div className="desktop-menubar">
-        <span className="mb-logo">yanxx</span>
-        <span className="mb-item">我的OS</span>
-        <span className="mb-item">项目</span>
-        <span className="mb-item">联系</span>
+        <span className="mb-logo">yanxx OS</span>
+        {desktopMenu.map((m) => (
+          <span className="mb-item" key={m}>
+            {m}
+          </span>
+        ))}
         <Clock />
       </div>
-      <div className="desktop-surface" ref={surface} onClick={burst}>
+
+      <div className="desktop-surface" onClick={burst}>
         {STARS.map((s, i) => (
           <span
             key={i}
             className="wp-star"
             style={
               {
-                left: s.x,
-                top: s.y,
+                left: s.left,
+                top: s.top,
                 '--size': `${s.size}px`,
                 '--op': s.op,
                 '--dur': s.dur,
@@ -287,7 +388,6 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
               key={icon.id}
               type="button"
               className="dicon"
-              style={{ left: icon.x, top: icon.y }}
               onClick={(e) => {
                 e.stopPropagation();
                 iconClick(icon);
@@ -304,20 +404,26 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
           ))}
         </div>
 
-        <div className="desktop-sticker" aria-hidden="true">
+        <div className="desktop-sticker" ref={sticker} onPointerDown={stickerDown}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/sticker.png" alt="" />
+          <img src="/images/sticker.png" alt="手绘贴纸：机器人坐在纸飞机上" draggable={false} />
         </div>
 
-        {open ? (
-          <Window title={open} onClose={() => setOpen(null)}>
-            {windows[open]}
+        {wins.map((w) => (
+          <Window
+            key={w.id}
+            id={w.id}
+            title={w.id}
+            initial={{ x: w.x, y: w.y }}
+            z={w.z}
+            onClose={() => closeWin(w.id)}
+            onFocus={() => focusWin(w.id)}
+          >
+            {content[w.id]}
           </Window>
-        ) : null}
+        ))}
 
-        <div className="scroll-on-hint">
-          点开图标，看看里面
-        </div>
+        <div className="scroll-on-hint">向下滑动，和这里说再见</div>
       </div>
 
       {bursts.map((b) => (

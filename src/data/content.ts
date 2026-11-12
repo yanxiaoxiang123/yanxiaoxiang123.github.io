@@ -3,94 +3,49 @@ export const profile = {
   nameLatin: 'Yan Xiaoxiang',
   email: 's24150812056@smail.cczu.edu.cn',
   github: 'https://github.com/yanxiaoxiang123',
-  tagline: '1 person + AI = 1 team',
+  tagline: 'Wait for A Job',
   statement: '把模型、数据与工程，做成能用的系统。',
   meta: '常州大学 · 计算机硕士 · 2027 届 · 开放实习与校招',
 };
 
-export type TermLine =
-  | { kind: 'prompt'; cmd: string }
-  | { kind: 'output'; text: string }
-  | { kind: 'gold'; text: string };
+/* ---------- 终端开场 ---------- */
 
-export const terminalLines: TermLine[] = [
-  { kind: 'prompt', cmd: 'whoami' },
-  { kind: 'output', text: '晏晓翔 · Yan Xiaoxiang' },
-  { kind: 'prompt', cmd: 'cat tagline.txt' },
-  { kind: 'gold', text: '1 person + AI = 1 team' },
-  { kind: 'output', text: '把模型、数据与工程，做成能用的系统。' },
-  { kind: 'output', text: '常州大学 · 计算机硕士 · 2027 届 · 开放实习与校招' },
-  { kind: 'prompt', cmd: 'ls ~/projects' },
-  { kind: 'output', text: 'backing/   patent-review/   logistics-forecast/' },
+export type IntroLine =
+  | { type: 'cmd'; text: string }
+  | { type: 'output'; prefix: string; text: string }
+  | { type: 'gold'; prefix: string; text: string }
+  | { type: 'blank' };
+
+export const introLines: IntroLine[] = [
+  { type: 'cmd', text: 'whoami' },
+  { type: 'output', prefix: '> ', text: '晏晓翔 · Yan Xiaoxiang' },
+  { type: 'blank' },
+  { type: 'cmd', text: 'cat about.md' },
+  { type: 'output', prefix: '> ', text: '把模型、数据与工程，做成能用的系统' },
+  { type: 'output', prefix: '  ', text: '全栈 / AI Agent / 时间序列与视觉' },
+  { type: 'output', prefix: '  ', text: '常州大学 · 计算机硕士 · 2027 届' },
+  { type: 'blank' },
+  { type: 'cmd', text: 'echo "Wait for A Job"' },
+  { type: 'gold', prefix: '> ', text: 'Wait for A Job' },
+  { type: 'blank' },
+  { type: 'cmd', text: 'open yanxx-os.app' },
 ];
 
-export type TabId = 'home' | 'os' | 'works';
+export const bootCmd = 'yanxx-os.app';
+export const progressBlocks = 12;
+export const progressStepMs = 80;
+
+/* ---------- 桌面 ---------- */
+
+export type TabId = 'home' | 'works' | 'about';
 
 export const tabs: { id: TabId; label: string; num: string }[] = [
   { id: 'home', label: '主页', num: '01' },
-  { id: 'os', label: '我的OS', num: '02' },
-  { id: 'works', label: '项目', num: '03' },
+  { id: 'works', label: '项目', num: '02' },
+  { id: 'about', label: '关于', num: '03' },
 ];
 
-export const home = {
-  intro: {
-    label: '介绍',
-    heading: '用 AI 赋能工程',
-    body: '常州大学计算机硕士在读，探索数据、算法与可用的系统。从模型实验到完整应用，我习惯和 Agent 搭档，把想法放进真实的问题里。',
-  },
-  values: {
-    label: '个人优势',
-    heading: '一个人，也能当一支团队',
-    items: [
-      {
-        title: '全栈交付',
-        text: '从需求、架构到开发、部署、运维，能独立走完全流程，有过主导多款系统落地的经验。',
-      },
-      {
-        title: '模型实践',
-        text: '时间序列、计算机视觉与 LLM 微调，用数据与评测把模型效果讲清楚。',
-      },
-      {
-        title: 'Agent 协作',
-        text: '熟练使用 Claude Code、Codex 等工具，把代码理解、修改与开发串成可复用的工作流。',
-      },
-    ],
-  },
-  timeline: {
-    label: '经历',
-    heading: '从数据到系统',
-    items: [
-      {
-        date: '2020.09',
-        title: '数据科学与大数据技术 · 本科',
-        place: '常州大学',
-        text: '从数据分析出发，逐步走向模型与系统实践。',
-      },
-      {
-        date: '2024.09',
-        title: '计算机科学与技术 · 硕士',
-        place: '常州大学',
-        text: '关注时间序列与计算机视觉，预计 2027 年毕业。',
-      },
-      {
-        date: '2026.07',
-        title: '多模态算法与数据工程 · 实习',
-        place: '北京玛达科技',
-        text: '视频元数据处理、抽取流水线与模型评测工具链。',
-      },
-    ],
-  },
-  now: {
-    label: '现在',
-    heading: '正在发生',
-    items: [
-      { title: 'Backing · A 股智能投研平台', sub: '全栈开发 · 2026.02 — 至今' },
-      { title: '求职中', sub: '2027 届 · 开放实习与校招' },
-      { title: '研究 · 时间序列与计算机视觉', sub: '硕士方向' },
-    ],
-    todo: '把下一个想法做成能用的系统。',
-  },
-};
+export const desktopMenu = ['主页', '关于', '项目', '做法'];
 
 export type Project = {
   slug: string;
@@ -172,13 +127,89 @@ export const research = [
   },
 ];
 
-export const contact = {
-  windowTitle: 'Say Hi',
-  heading: '聊聊新的可能',
-  body: '关于项目、研究或工作机会，欢迎写信，或到 GitHub 找我。',
-  email: 's24150812056@smail.cczu.edu.cn',
-  github: 'https://github.com/yanxiaoxiang123',
+/* ---------- 关于页（原主页内容） ---------- */
+
+export const about = {
+  intro: {
+    label: '介绍',
+    heading: '用 AI 赋能工程',
+    body: '常州大学计算机硕士在读，探索数据、算法与可用的系统。从模型实验到完整应用，我习惯和 Agent 搭档，把想法放进真实的问题里。',
+  },
+  values: {
+    label: '个人优势',
+    heading: '一个人，也能当一支团队',
+    items: [
+      {
+        title: '全栈交付',
+        text: '从需求、架构到开发、部署、运维，能独立走完全流程，有过主导多款系统落地的经验。',
+      },
+      {
+        title: '模型实践',
+        text: '时间序列、计算机视觉与 LLM 微调，用数据与评测把模型效果讲清楚。',
+      },
+      {
+        title: 'Agent 协作',
+        text: '熟练使用 Claude Code、Codex 等工具，把代码理解、修改与开发串成可复用的工作流。',
+      },
+    ],
+  },
+  timeline: {
+    label: '经历',
+    heading: '从数据到系统',
+    items: [
+      {
+        date: '2020.09',
+        title: '数据科学与大数据技术 · 本科',
+        place: '常州大学',
+        text: '从数据分析出发，逐步走向模型与系统实践。',
+      },
+      {
+        date: '2024.09',
+        title: '计算机科学与技术 · 硕士',
+        place: '常州大学',
+        text: '关注时间序列与计算机视觉，预计 2027 年毕业。',
+      },
+      {
+        date: '2026.07',
+        title: '多模态算法与数据工程 · 实习',
+        place: '北京玛达科技',
+        text: '视频元数据处理、抽取流水线与模型评测工具链。',
+      },
+    ],
+  },
+  now: {
+    label: '现在',
+    heading: '正在发生',
+    items: [
+      { title: 'Backing · A 股智能投研平台', sub: '全栈开发 · 2026.02 — 至今' },
+      { title: '求职中', sub: '2027 届 · 开放实习与校招' },
+      { title: '研究 · 时间序列与计算机视觉', sub: '硕士方向' },
+    ],
+    todo: '把下一个想法做成能用的系统。',
+  },
+};
+
+/* ---------- 联系 ---------- */
+
+export const contactInfo = {
   quote: '把想法，做成能用的东西。',
-  signoff: '晏晓翔 · Built with AI',
-  backToTop: '回到开始 · Back to Start',
+  email: profile.email,
+  github: profile.github,
+};
+
+/* ---------- 告别终端 ---------- */
+
+export const goodbye: {
+  lines: { cmd: string; out: string; gold?: boolean }[];
+  footer: string;
+  back: string;
+} = {
+  lines: [
+    { cmd: 'echo "see you"', out: 'See you next time.' },
+    { cmd: 'cat contact.md', out: 's24150812056@smail.cczu.edu.cn' },
+    { cmd: 'fortune', out: '“把想法，做成能用的东西。” — 晏晓翔' },
+    { cmd: 'exit', out: 'Process completed', gold: true },
+  ],
+  footer: '© 2026 晏晓翔 · Built with AI',
+  back: '回到开始 · Back to Start',
 };

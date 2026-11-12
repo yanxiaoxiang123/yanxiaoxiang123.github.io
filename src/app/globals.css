@@ -1,5 +1,5 @@
 /* ============================================================
-   yanxx — 1 person + AI = 1 team
+   yanxx — Wait for A Job
    Design language reproduced from hiesther.me
    ============================================================ */
 
@@ -268,6 +268,24 @@ a {
   padding: 2px 8px;
   font-size: 14px;
   font-weight: 700;
+}
+.term-progress {
+  color: var(--yellow);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.terminal.scale-through {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(1.15);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.macbook-wrapper.zoom-transition {
+  transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+}
+.hero-section {
+  cursor: pointer;
 }
 .cursor {
   display: inline-block;
@@ -553,10 +571,10 @@ a {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  width: 280px;
+  width: 260px;
   transition: filter 0.2s;
   position: absolute;
-  bottom: 20px;
+  bottom: 24px;
   right: 22%;
 }
 .desktop-sticker:active {
@@ -631,8 +649,13 @@ a {
 
 .desktop-icons {
   position: absolute;
-  inset: 0;
+  top: 24px;
+  right: 26px;
   z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
+  gap: 20px 14px;
+  justify-items: center;
 }
 .dicon {
   cursor: pointer;
@@ -648,10 +671,9 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  width: 80px;
+  width: 84px;
   padding: 10px 4px;
   transition: background 0.15s;
-  position: absolute;
 }
 .dicon:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -857,6 +879,41 @@ a {
 .folder-row a {
   text-decoration: none;
 }
+.win-link {
+  background: var(--blue);
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  transition: opacity 0.2s;
+}
+.win-link:hover {
+  opacity: 0.85;
+}
+.win-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.win-list li {
+  color: var(--ink-light);
+  font-size: 13px;
+  line-height: 1.65;
+  padding-left: 14px;
+  position: relative;
+}
+.win-list li:before {
+  content: '›';
+  color: var(--blue);
+  position: absolute;
+  left: 0;
+  font-family: var(--mono);
+}
 
 .scroll-on-hint {
   text-align: center;
@@ -876,26 +933,79 @@ a {
 .exit-section {
   background: var(--cream);
   position: relative;
+  height: 400vh;
 }
 .exit-sticky {
   background: var(--cream);
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   position: sticky;
   top: 0;
   overflow: hidden;
-  padding: 40px 16px;
 }
-.goodbye-screen {
-  background: var(--term-bg);
+.exit-macbook-wrapper {
+  will-change: transform, opacity;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: center center;
+}
+.exit-bezel {
+  background: #2a2a30;
   border-radius: 14px 14px 0 0;
   width: 708px;
-  max-width: 92vw;
+  max-width: 94vw;
+  padding: 0 14px 14px;
+  position: relative;
+}
+.exit-notch {
+  z-index: 2;
+  background: #2a2a30;
+  border-radius: 0 0 10px 10px;
+  width: 130px;
+  height: 14px;
+  margin: 0 auto;
+  position: relative;
+}
+.exit-screen {
+  background: var(--blue);
+  border-radius: 4px;
+  width: 680px;
+  max-width: 100%;
+  height: 440px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+.exit-hinge {
+  background: linear-gradient(#8a8a8e 0%, #6e6e72 100%);
+  border-radius: 0 0 2px 2px;
+  width: 720px;
+  max-width: 96vw;
+  height: 3px;
+}
+.exit-base {
+  background: linear-gradient(#c8c8cc 0%, #a8a8ac 30%, #b8b8bc 70%, #9a9a9e 100%);
+  border-radius: 0 0 10px 10px;
+  width: 760px;
+  max-width: 100vw;
+  height: 14px;
+}
+.exit-shadow {
+  background: radial-gradient(rgba(0, 0, 0, 0.25) 0%, transparent 70%);
+  width: 700px;
+  max-width: 92vw;
+  height: 40px;
+  margin-top: 4px;
+}
+.goodbye-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
 }
 .goodbye-titlebar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -914,14 +1024,15 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 28px 28px 32px;
-  min-height: 320px;
+  flex: 1;
+  padding: 14px 24px;
+  overflow: hidden;
 }
 .goodbye-terminal {
   text-align: left;
   font-family: var(--mono);
-  font-size: 13px;
-  line-height: 2;
+  font-size: 12px;
+  line-height: 1.85;
 }
 .gt-line {
   white-space: pre-wrap;
@@ -965,11 +1076,26 @@ a {
 }
 .goodbye-footer {
   color: rgba(255, 255, 255, 0.4);
-  text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 10px;
+  padding: 8px 14px;
   font-family: var(--mono);
   font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.goodbye-back {
+  background: none;
+  border: none;
+  color: var(--yellow);
+  font-family: var(--mono);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+}
+.goodbye-back:hover {
+  text-decoration: underline;
 }
 
 .back-to-top {
@@ -1163,24 +1289,21 @@ a {
     display: none;
   }
   .desktop-icons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-content: start;
-    gap: 6px;
-    padding: 14px 10px;
-    max-width: 320px;
+    top: 12px;
+    right: 8px;
+    grid-template-columns: repeat(3, 72px);
+    gap: 12px 4px;
   }
   .scroll-on-hint {
     bottom: 84px;
   }
   .dicon {
-    position: static;
-    width: auto;
+    width: 72px;
   }
   .desktop-sticker {
     width: 132px;
     bottom: auto;
-    top: 46%;
+    top: 55%;
     right: 4%;
     left: auto;
   }
@@ -1197,12 +1320,39 @@ a {
     width: 92vw;
   }
   .goodbye-terminal {
-    font-size: 11px;
-    line-height: 1.9;
+    font-size: 9.5px;
+    line-height: 1.8;
   }
   .goodbye-body {
-    padding: 20px 16px 24px;
-    min-height: 240px;
+    padding: 8px 12px;
+  }
+  .exit-bezel {
+    width: 340px;
+    padding: 0 9px 9px;
+  }
+  .exit-notch {
+    width: 72px;
+    height: 10px;
+  }
+  .exit-screen {
+    width: 322px;
+    height: 250px;
+  }
+  .exit-hinge {
+    width: 348px;
+  }
+  .exit-base {
+    width: 360px;
+    height: 10px;
+  }
+  .exit-shadow {
+    width: 330px;
+  }
+  .goodbye-footer {
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 8px;
+    font-size: 9px;
   }
 }
 

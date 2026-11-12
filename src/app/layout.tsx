@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '晏晓翔 · 1 person + AI = 1 team',
+  title: '晏晓翔 · Wait for A Job',
   description:
     '晏晓翔，常州大学计算机硕士，用 AI 与 Agent 把数据、模型与工程做成能用的系统。',
 };

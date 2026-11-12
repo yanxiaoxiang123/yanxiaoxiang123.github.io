@@ -565,28 +565,59 @@ a {
   position: relative;
   overflow: hidden;
 }
-.desktop-sticker {
+.xiaojing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150px;
+  height: 150px;
+  z-index: 7;
   cursor: grab;
-  z-index: 5;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  width: 260px;
-  transition: filter 0.2s;
-  position: absolute;
-  bottom: 24px;
-  right: 22%;
+  will-change: transform;
 }
-.desktop-sticker:active {
+.xiaojing:active {
   cursor: grabbing;
 }
-.desktop-sticker:hover {
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
-}
-.desktop-sticker img {
-  pointer-events: none;
+.xiaojing img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+}
+.xiaojing-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 10px);
+  transform: translateX(-50%);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 7px 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  animation: bubblePop 0.22s var(--ease-out);
+  z-index: 2;
+}
+.xiaojing-bubble:after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+}
+@keyframes bubblePop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px) scale(0.9);
+  }
 }
 .wp-star {
   color: var(--yellow);
@@ -1298,12 +1329,13 @@ a {
   .dicon {
     width: 72px;
   }
-  .desktop-sticker {
-    width: 132px;
-    bottom: auto;
-    top: 55%;
-    right: 4%;
-    left: auto;
+  .xiaojing {
+    width: 112px;
+    height: 112px;
+  }
+  .xiaojing-bubble {
+    font-size: 11px;
+    padding: 6px 10px;
   }
   .dicon-art {
     width: 44px;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { about, contactInfo, desktopMenu, profile, projects, research } from '@/data/content';
+import Xiaojing, { type PetEvent, type PetEventKind } from './Xiaojing';
 
 type WinId =
   | 'about'
@@ -180,7 +181,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   const [wins, setWins] = useState<{ id: WinId; x: number; y: number; z: number }[]>([]);
   const zRef = useRef(100);
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
-  const sticker = useRef<HTMLDivElement>(null);
+  const [petEvent, setPetEvent] = useState<PetEvent | null>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [moved, setMoved] = useState<Record<string, { x: number; y: number }>>({});
@@ -231,6 +232,12 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     return l ? { x: l.x, y: l.y } : { x: 0, y: 0 };
   };
 
+  const eventSeq = useRef(0);
+  const tellPet = useCallback((kind: PetEventKind) => {
+    eventSeq.current += 1;
+    setPetEvent({ kind, at: eventSeq.current });
+  }, []);
+
   const burst = (e: React.MouseEvent) => {
     const id = Date.now() + Math.random();
     setBursts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
@@ -240,6 +247,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   const openWin = useCallback((id: WinId) => {
     zRef.current += 1;
     const z = zRef.current;
+    tellPet('open');
     setWins((prev) => {
       const found = prev.find((w) => w.id === id);
       if (found) return prev.map((w) => (w.id === id ? { ...w, z } : w));
@@ -254,9 +262,12 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
         },
       ];
     });
-  }, []);
+  }, [tellPet]);
 
-  const closeWin = (id: WinId) => setWins((prev) => prev.filter((w) => w.id !== id));
+  const closeWin = (id: WinId) => {
+    setWins((prev) => prev.filter((w) => w.id !== id));
+    tellPet('close');
+  };
   const focusWin = (id: WinId) => {
     zRef.current += 1;
     const z = zRef.current;
@@ -288,6 +299,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
       moved: false,
     };
     setActiveIcon(icon.id);
+    tellPet('drag');
   };
 
   const moveDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -305,36 +317,12 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   };
 
   const endDrag = () => {
-    if (dragRef.current?.moved) suppressClick.current = true;
+    if (dragRef.current?.moved) {
+      suppressClick.current = true;
+      tellPet('drop');
+    }
     dragRef.current = null;
     setActiveIcon(null);
-  };
-
-  /* draggable sticker */
-  const stickerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const el = sticker.current;
-    if (!el) return;
-    e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const rect = el.getBoundingClientRect();
-    const parent = el.parentElement!.getBoundingClientRect();
-    const left = rect.left - parent.left;
-    const top = rect.top - parent.top;
-    el.style.right = 'auto';
-    el.style.bottom = 'auto';
-    el.style.left = `${left}px`;
-    el.style.top = `${top}px`;
-    const move = (ev: PointerEvent) => {
-      el.style.left = `${Math.max(0, Math.min(parent.width - rect.width, left + ev.clientX - startX))}px`;
-      el.style.top = `${Math.max(0, Math.min(parent.height - rect.height, top + ev.clientY - startY))}px`;
-    };
-    const up = () => {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
-    };
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
   };
 
   const content = useMemo<Record<WinId, React.ReactNode>>(
@@ -509,10 +497,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
           })}
         </div>
 
-        <div className="desktop-sticker" ref={sticker} onPointerDown={stickerDown}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/sticker.png" alt="手绘贴纸：机器人坐在纸飞机上" draggable={false} />
-        </div>
+        <Xiaojing area={size} event={petEvent} />
 
         {wins.map((w) => (
           <Window

@@ -15,6 +15,7 @@ dist/
 # local-only private material (resumes, photos, agent config)
 docs/简历/
 docs/照片/
+docs/xiaojing-pencil/
 .claude/
 
 # generated image masters

@@ -49,7 +49,7 @@ npm run typecheck
 ## 内容维护
 
 - 全部文案、项目、经历在 `src/data/content.ts`。
-- 贴纸插画在 `public/images/sticker.png`（Magpie 生成，已抠图）。
+- 桌面伙伴「小镜」的 9 个动作在 `public/images/xiaojing/*.webp`，由 `docs/xiaojing-pencil/gifs/` 的 GIF 转码而来（透明、循环、单帧约 120–210KB）。
 - 字体通过 Google Fonts CDN 加载，不打包字体文件。
 
 ## 部署

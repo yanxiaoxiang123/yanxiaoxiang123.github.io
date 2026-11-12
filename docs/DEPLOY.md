@@ -22,6 +22,29 @@ gh api -X POST repos/yanxiaoxiang123/yanxiaoxiang123.github.io/pages -f build_ty
 
 ## 二、自有服务器（Rocky Linux）
 
+**当前生产服务器：`root@43.142.9.102`（Rocky Linux 9.4，nginx 1.20.1）**
+
+- 站点目录：`/var/www/yanxx`
+- Nginx 配置：`/etc/nginx/conf.d/yanxx.conf`（`listen 80 default_server`）
+- 原 nginx 默认 server 块已从 `/etc/nginx/nginx.conf` 移除，备份在 `nginx.conf.bak`
+- firewalld 未启用、SELinux 已禁用
+- 访问：http://43.142.9.102/
+
+重新发布（密码认证，本机用 Git Bash + Python paramiko 上传 `out/` 压缩包）：
+
+```bash
+npm run build
+tar -czf out.tgz -C out .
+```
+
+然后把 `out.tgz` 传到服务器 `/tmp`，解压覆盖：
+
+```bash
+mkdir -p /var/www/yanxx && rm -rf /var/www/yanxx/* && tar -xzf /tmp/out.tgz -C /var/www/yanxx && systemctl reload nginx
+```
+
+
+
 前提：服务器已装 `nginx`、`rsync`，本机可通过 SSH 免密登录。
 
 ### 1. 本机构建并同步

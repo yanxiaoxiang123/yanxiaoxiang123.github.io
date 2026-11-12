@@ -1202,12 +1202,9 @@ a {
 }
 .fx-card {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 290px;
-  gap: 26px;
-  align-items: center;
-  min-height: 250px;
-  padding: 30px 34px;
+  display: block;
+  min-height: 360px;
+  padding: 34px 38px 40px;
   border-radius: 22px;
   background: radial-gradient(120% 150% at 92% 8%, var(--wash, rgba(43, 127, 216, 0.2)) 0%, transparent 58%),
     linear-gradient(140deg, #fffdf7 10%, #ffffff 72%);
@@ -1219,6 +1216,11 @@ a {
   transform: translateY(-4px);
   box-shadow: 0 26px 60px rgba(26, 26, 46, 0.12);
   z-index: 3;
+}
+.fx-text {
+  position: relative;
+  max-width: 47%;
+  z-index: 2;
 }
 .fx-meta {
   color: var(--blue);
@@ -1256,98 +1258,45 @@ a {
   font-size: 10px;
 }
 .fx-shot {
-  justify-self: end;
-  align-self: end;
-  width: 270px;
-  height: 180px;
-  margin-bottom: -14px;
+  position: absolute;
+  right: 12px;
+  bottom: -20px;
+  width: 40%;
+  aspect-ratio: 4 / 3;
+  height: auto;
   z-index: 2;
   transform-origin: 50% 85%;
   will-change: transform;
   transition: transform 0.75s cubic-bezier(0.2, 1.45, 0.35, 1), filter 0.5s var(--ease-out);
 }
-.fx-card:hover .fx-shot {
-  transform: translate(16px, 34px) scale(1.12) rotate(2deg);
-  filter: drop-shadow(0 24px 30px rgba(26, 26, 46, 0.18));
+.fx-pop {
+  position: absolute;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(26px) scale(0.3) rotate(0deg);
+  transform-origin: 50% 70%;
+  filter: drop-shadow(0 6px 10px rgba(26, 26, 46, 0.12));
+  transition: transform 0.62s cubic-bezier(0.2, 1.5, 0.32, 1), opacity 0.28s var(--ease-out);
 }
-.fx-poster {
+.fx-card:hover .fx-pop {
+  opacity: 1;
+  transform: translateY(0) scale(1) rotate(var(--r, 0deg));
+  transition-delay: var(--d, 0ms);
+}
+.fx-card:hover .fx-shot {
+  transform: translate(22px, 22px) scale(1.04) rotate(1.2deg);
+}
+.fx-screen {
+  display: block;
   width: 100%;
   height: 100%;
-  background: #fff;
+  object-fit: cover;
   border-radius: 14px;
-  padding: 15px 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  box-shadow: 0 20px 40px rgba(26, 26, 46, 0.18), 0 2px 6px rgba(26, 26, 46, 0.08);
-  border: 1px solid rgba(26, 26, 46, 0.05);
+  background: #fff;
+  border: 1px solid rgba(26, 26, 46, 0.07);
+  box-shadow: 0 20px 44px rgba(26, 26, 46, 0.18), 0 2px 6px rgba(26, 26, 46, 0.08);
 }
-.fx-poster-top {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--ink-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fx-stats {
-  display: flex;
-  gap: 16px;
-}
-.fx-stats b {
-  display: block;
-  font-family: var(--serif);
-  font-size: 21px;
-  line-height: 1;
-  color: var(--ink);
-}
-.fx-stats span {
-  font-size: 9.5px;
-  color: var(--ink-faint);
-}
-.fx-graph {
-  margin-top: auto;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 42px;
-}
-.fx-graph i {
-  flex: 1;
-  border-radius: 3px 3px 0 0;
-  background: var(--blue);
-  opacity: 0.85;
-}
-.fx-yellow .fx-graph i {
-  background: var(--yellow);
-}
-.fx-red .fx-graph i {
-  background: var(--red);
-}
-.fx-graph i:nth-child(1) {
-  height: 38%;
-  opacity: 0.35;
-}
-.fx-graph i:nth-child(2) {
-  height: 62%;
-  opacity: 0.5;
-}
-.fx-graph i:nth-child(3) {
-  height: 46%;
-  opacity: 0.42;
-}
-.fx-graph i:nth-child(4) {
-  height: 78%;
-  opacity: 0.7;
-}
-.fx-graph i:nth-child(5) {
-  height: 64%;
-  opacity: 0.58;
-}
-.fx-graph i:nth-child(6) {
-  height: 92%;
-}
-
 /* --- Vibe Coding --- */
 .vibe {
   margin-top: 96px;
@@ -1405,105 +1354,194 @@ a {
 .tk {
   margin-top: 96px;
 }
-.tk-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 26px 22px;
-  margin-top: 8px;
-  padding-bottom: 60px;
-}
-.tk-card {
+.tk-board {
   position: relative;
-  height: 300px;
-  perspective: 1100px;
+  max-width: 900px;
+  height: 500px;
+  margin: 0 auto;
+  border-radius: 26px;
+  background: radial-gradient(circle at 22% 18%, rgba(43, 127, 216, 0.06), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(244, 215, 88, 0.16), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(26, 26, 46, 0.035) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(26, 26, 46, 0.035) 0 1px, transparent 1px 28px), #fbf8ef;
+  border: 1px solid rgba(26, 26, 46, 0.06);
+  overflow: hidden;
+}
+.tk-slot {
+  position: absolute;
+  width: 238px;
+  height: 246px;
   outline: none;
   animation: popIn 0.7s var(--ease-out) both;
 }
+.tk-folder {
+  width: 238px;
+  height: 246px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  position: relative;
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.55s cubic-bezier(0.2, 1.2, 0.3, 1);
+}
+.tk-slot:hover .tk-folder,
+.tk-slot:focus-within .tk-folder {
+  transform: rotate(0deg) translateY(-4px);
+}
 .tk-fold {
+  width: 238px;
+  height: 190px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: perspective(2500px);
+}
+.tk-folder-back {
   position: absolute;
   inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(176deg, #dcdedf 5%, #bcbdbd 42%);
 }
-.tk-back {
+.tk-folder-back:before {
+  content: '';
   position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: 3%;
-  height: 60%;
-  border-radius: 14px;
-  background: linear-gradient(#efeade, #ddd6c6);
-  box-shadow: inset 0 1px #fff;
-}
-.tk-photo {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 5%;
-  height: 66%;
-  object-fit: cover;
-  border-radius: 10px;
-  z-index: 1;
-  opacity: 0.97;
-  transform: translateY(26px) scale(0.9);
-  transform-origin: 50% 80%;
-  box-shadow: 0 8px 20px rgba(26, 26, 46, 0.16);
-  transition: transform 0.75s cubic-bezier(0.2, 1.5, 0.35, 1), box-shadow 0.55s var(--ease-out),
-    opacity 0.4s;
-  will-change: transform;
+  top: -12px;
+  left: 0;
+  width: 96px;
+  height: 26px;
+  border-radius: 10px 12px 0 0;
+  background: linear-gradient(176deg, #dcdedf 5%, #d5d6d6 60%);
 }
 .tk-front {
   position: absolute;
-  left: 2%;
-  right: 2%;
-  bottom: 2%;
-  height: 58%;
+  left: 0;
+  bottom: 0;
+  width: 238px;
+  height: 147px;
+  border-radius: 12px;
   z-index: 2;
-  border-radius: 14px;
-  padding: 16px 18px;
+  transform-origin: 50% 100%;
+  transform: perspective(2500px) rotateX(0deg);
+  background: linear-gradient(#e5e5e7 0%, #fafafa 46%, #fff 100%);
+  box-shadow: inset 0 2px #fff, 0.4px 0.4px 0.56px -0.875px rgba(0, 0, 0, 0.17),
+    1.2px 1.2px 1.7px -1.75px rgba(0, 0, 0, 0.16), 3.2px 3.2px 4.5px -2.6px rgba(0, 0, 0, 0.14),
+    10px 10px 14px -3.5px rgba(0, 0, 0, 0.08);
+  transition: transform 0.55s cubic-bezier(0.2, 1.2, 0.3, 1), box-shadow 0.55s;
+  overflow: hidden;
+}
+.tk-slot:hover .tk-front,
+.tk-slot:focus-within .tk-front {
+  transform: perspective(2500px) rotateX(-65deg);
+  box-shadow: none;
+}
+.tk-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(26, 26, 46, 0.035) 0 1px,
+    transparent 1px 4px
+  );
+}
+.tk-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  font-size: 30px;
+  line-height: 1;
+  text-shadow: 0 1px 0 #fff;
+}
+.tk-item {
+  position: absolute;
+  top: 34px;
+  left: 34px;
+  width: 170px;
+  height: 120px;
+  z-index: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 -1px 2px rgba(122, 122, 122, 0.25);
+  transition: top 0.55s cubic-bezier(0.2, 1.45, 0.3, 1),
+    left 0.55s cubic-bezier(0.2, 1.45, 0.3, 1), width 0.55s cubic-bezier(0.2, 1.45, 0.3, 1),
+    height 0.55s cubic-bezier(0.2, 1.45, 0.3, 1),
+    transform 0.55s cubic-bezier(0.2, 1.45, 0.3, 1), box-shadow 0.55s;
+}
+.tk-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.tk-item-a {
+  transform: rotate(-3deg);
+}
+.tk-item-b {
+  transform: rotate(2deg);
+}
+.tk-slot:hover .tk-item-a,
+.tk-slot:focus-within .tk-item-a {
+  top: -58px;
+  left: -46px;
+  width: 198px;
+  height: 140px;
+  transform: rotate(-14deg);
+  box-shadow: 0 1px 3px rgba(92, 92, 92, 0.3);
+}
+.tk-slot:hover .tk-item-b,
+.tk-slot:focus-within .tk-item-b {
+  top: -40px;
+  left: 104px;
+  width: 198px;
+  height: 140px;
+  transform: rotate(12deg);
+  box-shadow: 0 1px 3px rgba(92, 92, 92, 0.3);
+}
+.tk-title {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  align-items: center;
   gap: 2px;
-  background: linear-gradient(#fdfdfb 0%, #f2eee2 100%);
-  box-shadow: inset 0 1px #fff, 0 14px 30px rgba(26, 26, 46, 0.14);
-  transform-origin: 50% 100%;
-  transition: transform 0.75s cubic-bezier(0.2, 1.25, 0.35, 1), box-shadow 0.55s var(--ease-out);
-  backface-visibility: hidden;
+  border-radius: 6px;
+  padding: 4px 12px;
+  transition: background-color 0.4s, color 0.4s;
 }
-.tk-mark {
-  color: var(--yellow);
-  font-size: 15px;
-  line-height: 1;
-  margin-bottom: 2px;
-  text-shadow: 0 1px 0 rgba(26, 26, 46, 0.1);
+.tk-title p {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink-light);
+  white-space: nowrap;
+  transition: color 0.4s;
 }
-.tk-front b {
-  font-family: var(--serif-sc);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.tk-meta {
+.tk-title span {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--ink-faint);
+  transition: color 0.4s;
 }
-.tk-card:hover .tk-front,
-.tk-card:focus-visible .tk-front {
-  transform: rotateX(-72deg);
-  box-shadow: 0 4px 10px rgba(26, 26, 46, 0.06);
+.tk-slot:hover .tk-title,
+.tk-slot:focus-within .tk-title {
+  background: var(--blue);
 }
-.tk-card:hover .tk-photo,
-.tk-card:focus-visible .tk-photo {
-  transform: translateY(-34%) scale(1.08) rotate(-2deg);
-  box-shadow: 0 30px 54px rgba(26, 26, 46, 0.26);
-  z-index: 3;
+.tk-slot:hover .tk-title p,
+.tk-slot:hover .tk-title span,
+.tk-slot:focus-within .tk-title p,
+.tk-slot:focus-within .tk-title span {
+  color: #fff;
 }
-.tk-card:nth-child(even):hover .tk-photo,
-.tk-card:nth-child(even):focus-visible .tk-photo {
-  transform: translateY(-34%) scale(1.08) rotate(2deg);
-}
-.tk-card:focus-visible .tk-front {
-  outline: 2px solid var(--blue);
+.tk-slot:focus-within .tk-title {
+  outline: 2px solid rgba(43, 127, 216, 0.4);
   outline-offset: 2px;
 }
 
@@ -1667,19 +1705,19 @@ a {
     padding: 84px 16px 100px;
   }
   .fx-card {
-    grid-template-columns: 1fr;
     padding: 22px 20px 24px;
-    gap: 18px;
     min-height: 0;
   }
+  .fx-text {
+    max-width: 100%;
+  }
   .fx-shot {
-    justify-self: start;
-    width: 220px;
-    height: 148px;
-    margin-bottom: 0;
+    position: static;
+    width: 100%;
+    margin-top: 20px;
   }
   .fx-card:hover .fx-shot {
-    transform: translateY(-10px) scale(1.04) rotate(-1.5deg);
+    transform: translateY(-4px) scale(1.02) rotate(-0.8deg);
   }
   .fx-blurb {
     font-size: 13px;
@@ -1703,34 +1741,63 @@ a {
   .tk {
     margin-top: 72px;
   }
-  .tk-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 12px;
-    padding-bottom: 40px;
+  .tk-board {
+    height: auto;
+    max-width: 100%;
+    padding: 56px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 44px;
+    overflow: visible;
   }
-  .tk-card {
-    height: 232px;
+  .tk-slot {
+    position: static;
+  }
+  .tk-board > .sticker {
+    display: none;
+  }
+  .tk-folder,
+  .tk-fold,
+  .tk-front,
+  .tk-slot {
+    width: 210px;
+  }
+  .tk-fold {
+    height: 168px;
   }
   .tk-front {
-    padding: 12px 12px;
+    height: 130px;
   }
-  .tk-front b {
-    font-size: 13px;
+  .tk-item {
+    top: 24px;
+    left: 24px;
+    width: 156px;
+    height: 110px;
   }
-  .tk-meta {
-    font-size: 9px;
+  .tk-item-a {
+    transform: rotate(-3deg);
   }
-  .tk-photo {
-    height: 62%;
-    left: 7%;
-    right: 7%;
+  .tk-item-b {
+    transform: rotate(2deg);
   }
-  .tk-card:hover .tk-photo,
-  .tk-card:focus-visible .tk-photo {
-    transform: translateY(-26%) scale(1.05) rotate(-1.5deg);
+  .tk-slot:hover .tk-item-a,
+  .tk-slot:focus-within .tk-item-a {
+    top: -48px;
+    left: -32px;
+    width: 172px;
+    height: 122px;
+    transform: rotate(-14deg);
   }
-  .tk-card:nth-child(even):hover .tk-photo,
-  .tk-card:nth-child(even):focus-visible .tk-photo {
-    transform: translateY(-26%) scale(1.05) rotate(1.5deg);
+  .tk-slot:hover .tk-item-b,
+  .tk-slot:focus-within .tk-item-b {
+    top: -34px;
+    left: 76px;
+    width: 172px;
+    height: 122px;
+    transform: rotate(12deg);
+  }
+  .tk-title p {
+    font-size: 14px;
   }
 }

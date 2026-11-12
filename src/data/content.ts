@@ -143,13 +143,40 @@ export const vibeCards = [
   { emoji: '✎', title: 'Optuna', note: '调参与复现', x: 78, y: 48, r: -2 },
 ];
 
-export const toolkit = [
-  { src: '/images/toolkit/farther.webp', title: 'Farther in', meta: '拼贴 · 2025' },
-  { src: '/images/toolkit/pause.webp', title: 'a place to pause', meta: '拼贴 · 2025' },
-  { src: '/images/toolkit/last-light.webp', title: 'Last light', meta: '拼贴 · 2025' },
-  { src: '/images/toolkit/looking-up.webp', title: 'looking up', meta: '拼贴 · 2025' },
-  { src: '/images/toolkit/lake.webp', title: '湖边', meta: '照片 · 2025' },
-  { src: '/images/toolkit/dusk.webp', title: '傍晚', meta: '照片 · 2025' },
+export const toolkitFolders = [
+  {
+    title: 'Farther in',
+    meta: '拼贴 · 2025',
+    top: '7.8%',
+    left: '4.8%',
+    rot: -10,
+    items: [
+      { src: '/images/toolkit/farther.webp', label: 'Farther in' },
+      { src: '/images/toolkit/pause.webp', label: 'a place to pause' },
+    ],
+  },
+  {
+    title: 'Last light',
+    meta: '拼贴 · 2025',
+    top: '9%',
+    left: '64%',
+    rot: 11,
+    items: [
+      { src: '/images/toolkit/last-light.webp', label: 'Last light' },
+      { src: '/images/toolkit/looking-up.webp', label: 'looking up' },
+    ],
+  },
+  {
+    title: '湖边',
+    meta: '照片 · 2025',
+    top: '46%',
+    left: '44%',
+    rot: 2,
+    items: [
+      { src: '/images/toolkit/lake.webp', label: '湖边' },
+      { src: '/images/toolkit/dusk.webp', label: '傍晚' },
+    ],
+  },
 ];
 
 export const research = [

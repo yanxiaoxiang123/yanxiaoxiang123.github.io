@@ -181,6 +181,55 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   const zRef = useRef(100);
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
   const sticker = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const [moved, setMoved] = useState<Record<string, { x: number; y: number }>>({});
+  const [activeIcon, setActiveIcon] = useState<string | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    sx: number;
+    sy: number;
+    ox: number;
+    oy: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressClick = useRef(false);
+
+  useEffect(() => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /* Default desktop layout: three columns hugging the right edge. */
+  const layout = useMemo(() => {
+    const mobile = size.w > 0 && size.w <= 768;
+    const tileW = mobile ? 72 : 84;
+    const tileH = mobile ? 84 : 89;
+    const gapX = mobile ? 4 : 14;
+    const gapY = mobile ? 12 : 20;
+    const right = mobile ? 8 : 26;
+    const top0 = mobile ? 12 : 24;
+    return ICONS.map((icon, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      return {
+        id: icon.id,
+        x: Math.max(0, size.w - right - tileW - col * (tileW + gapX)),
+        y: top0 + row * (tileH + gapY),
+      };
+    });
+  }, [size.w]);
+
+  const posOf = (id: string) => {
+    if (moved[id]) return moved[id];
+    const l = layout.find((p) => p.id === id);
+    return l ? { x: l.x, y: l.y } : { x: 0, y: 0 };
+  };
 
   const burst = (e: React.MouseEvent) => {
     const id = Date.now() + Math.random();
@@ -220,6 +269,45 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
       return;
     }
     if (icon.win) openWin(icon.win);
+  };
+
+  const startDrag = (e: React.PointerEvent<HTMLButtonElement>, icon: IconDef) => {
+    suppressClick.current = false;
+    const p = posOf(icon.id);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* synthetic pointer events have no capture target */
+    }
+    dragRef.current = {
+      id: icon.id,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: p.x,
+      oy: p.y,
+      moved: false,
+    };
+    setActiveIcon(icon.id);
+  };
+
+  const moveDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.sx;
+    const dy = e.clientY - d.sy;
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+    d.moved = true;
+    const maxX = Math.max(0, size.w - 90);
+    const maxY = Math.max(0, size.h - 110);
+    const x = Math.max(0, Math.min(maxX, d.ox + dx));
+    const y = Math.max(0, Math.min(maxY, d.oy + dy));
+    setMoved((prev) => ({ ...prev, [d.id]: { x, y } }));
+  };
+
+  const endDrag = () => {
+    if (dragRef.current?.moved) suppressClick.current = true;
+    dragRef.current = null;
+    setActiveIcon(null);
   };
 
   /* draggable sticker */
@@ -360,7 +448,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
         <Clock />
       </div>
 
-      <div className="desktop-surface" onClick={burst}>
+      <div className="desktop-surface" ref={surfaceRef} onClick={burst}>
         {STARS.map((s, i) => (
           <span
             key={i}
@@ -383,25 +471,42 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
         ))}
 
         <div className="desktop-icons">
-          {ICONS.map((icon) => (
-            <button
-              key={icon.id}
-              type="button"
-              className="dicon"
-              onClick={(e) => {
-                e.stopPropagation();
-                iconClick(icon);
-              }}
-            >
-              <span
-                className={`dicon-art ${icon.kind}${icon.ext ? ` ext-${icon.ext}` : ''}`}
-                data-ext={icon.ext ? icon.ext.toUpperCase() : undefined}
+          {ICONS.map((icon) => {
+            const p = posOf(icon.id);
+            return (
+              <button
+                key={icon.id}
+                type="button"
+                className={`dicon${activeIcon === icon.id ? ' dragging' : ''}`}
+                style={{
+                  left: p.x,
+                  top: p.y,
+                  visibility: size.w ? 'visible' : 'hidden',
+                  zIndex: activeIcon === icon.id ? 30 : 2,
+                }}
+                onPointerDown={(e) => startDrag(e, icon)}
+                onPointerMove={moveDrag}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
+                  iconClick(icon);
+                }}
               >
-                {icon.emoji ? <span className="app-emoji">{icon.emoji}</span> : null}
-              </span>
-              <span className="dicon-label">{icon.label}</span>
-            </button>
-          ))}
+                <span
+                  className={`dicon-art ${icon.kind}${icon.ext ? ` ext-${icon.ext}` : ''}`}
+                  data-ext={icon.ext ? icon.ext.toUpperCase() : undefined}
+                >
+                  {icon.emoji ? <span className="app-emoji">{icon.emoji}</span> : null}
+                </span>
+                <span className="dicon-label">{icon.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="desktop-sticker" ref={sticker} onPointerDown={stickerDown}>

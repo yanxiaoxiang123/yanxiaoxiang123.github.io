@@ -701,18 +701,24 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  width: 84px;
-  padding: 10px 4px;
+  width: 72px;
+  padding: 8px 2px;
   transition: background 0.15s;
 }
+.dicon-img {
+  width: 48px;
+  height: 48px;
+  display: block;
+  pointer-events: none;
+}
 .dicon-repo {
-  width: 64px;
+  width: 72px;
   padding: 6px 2px;
 }
 .dicon-repo .dicon-art {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
 }
 .dicon-repo .dicon-label {
   font-size: 9px;
@@ -1714,14 +1720,18 @@ a {
     bottom: 84px;
   }
   .dicon {
-    width: 72px;
+    width: 60px;
+  }
+  .dicon-img {
+    width: 42px;
+    height: 42px;
   }
   .dicon-repo {
-    width: 58px;
+    width: 60px;
   }
   .dicon-repo .dicon-art {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
   .xiaojing {
     width: 112px;

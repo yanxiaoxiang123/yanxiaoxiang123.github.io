@@ -223,36 +223,6 @@ export const repoDetails: RepoDetail[] = [
     ],
   },
   {
-    name: 'backing',
-    lang: 'Python',
-    ext: 'PY',
-    stars: 1,
-    meta: '开源仓库 · 全栈',
-    summary:
-      'React + FastAPI 的股票研究与回测系统：数据服务、策略回测、AI 分析与实时行情串成一条链路。',
-    stack: 'React 18 · TypeScript · Vite · ECharts · FastAPI · SQLAlchemy · DeepSeek',
-    points: [
-      'K 线、技术指标与股票列表同步的数据服务。',
-      '多策略信号生成、统一回测与参数优化，全市场选股器。',
-      'DeepSeek 多阶段 AI 分析（技术面 / 消息面 / 风险 / 决策）与 HTTP + WebSocket 实时行情。',
-    ],
-  },
-  {
-    name: 'patent',
-    lang: 'Python',
-    ext: 'PY',
-    stars: 1,
-    meta: '开源仓库 · AI 应用',
-    summary:
-      'IPRS 智能专利审查平台：自动做形式检查、逻辑分析与合规提示，帮助专利代理人提高审查效率。',
-    stack: 'FastAPI · Vue3 · Ollama (Qwen3) · SSE · Redis · JWT',
-    points: [
-      '解析 docx / pdf 专利文档并智能分段。',
-      '四套规则模板（普通案、专利指引、项目案、IPC 分类）驱动审查。',
-      'SSE 流式输出、JWT 认证与 Redis 限流。',
-    ],
-  },
-  {
     name: 'yan-skills',
     lang: 'JavaScript',
     ext: 'JS',
@@ -303,36 +273,6 @@ export const repoDetails: RepoDetail[] = [
       'Tauri 2.0 桌面壳 + React 18 前端。',
       'Zustand 状态管理与 shadcn/ui 组件。',
       'Vite 构建、Tailwind 样式。',
-    ],
-  },
-  {
-    name: 'ecg-pvc-research-archive',
-    lang: 'Python',
-    ext: 'PY',
-    stars: 0,
-    meta: '研究归档 · 代码与样本保留权利',
-    summary:
-      '心电 PVC 弱标签分类、I 导联极性代理任务与 Qwen3-VL 报告微调的研究归档；代码与真实样本保留全部权利。',
-    stack: 'Python · PyTorch · ConvNeXt · Qwen3-VL LoRA',
-    points: [
-      '94 份历史实验脚本与整理后的参数化入口。',
-      '18 例经提供方许可公开的真实心电样本，九个来源类别各 2 例。',
-      '覆盖波形 / ConvNeXt 分类与语言侧 LoRA 微调，18 例不构成临床基准。',
-    ],
-  },
-  {
-    name: 'Qwen-LSTM-Drilling-Trajectory',
-    lang: 'Python',
-    ext: 'PY',
-    stars: 0,
-    meta: '论文官方代码 · 时序预测',
-    summary:
-      '把微调后 Qwen 的地质语义与 LSTM 序列编码结合，做随钻轨迹的深度向前在线预测。',
-    stack: 'Python · Qwen · LSTM · H5',
-    points: [
-      '按 1 ft 深度网格聚合，在线训练与评估井斜、方位。',
-      '提供跨井推理与一键实验脚本。',
-      '含 CPU 可跑的快速功能测试。',
     ],
   },
   {
@@ -402,20 +342,6 @@ export const repoDetails: RepoDetail[] = [
       '中英显式路由与静态导出。',
       'GSAP 滚动动效与项目详情页。',
       '无后端、数据库或运行时密钥。',
-    ],
-  },
-  {
-    name: 'yanxiaoxiang123.github.io',
-    lang: 'TypeScript',
-    ext: 'TS',
-    stars: 0,
-    meta: '现在这个站点 · 桌面 OS',
-    summary: '你现在看到的这个站点：终端开场、蓝色桌面与项目页。',
-    stack: 'Next.js 16 · React · TypeScript · 静态导出',
-    points: [
-      '终端逐字开场 + 进度条，缩放进入桌面。',
-      '桌面图标可拖拽，小镜会自己走动。',
-      '项目页含贴纸弹出与纸文件夹动效。',
     ],
   },
 ];

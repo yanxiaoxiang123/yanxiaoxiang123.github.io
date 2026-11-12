@@ -18,22 +18,19 @@ type WinId =
 type IconDef = {
   id: string;
   label: string;
-  kind: 'folder' | 'file' | 'app';
-  ext?: string;
-  emoji?: string;
-  win?: WinId;
-  external?: string;
+  icon: string;
+  win: WinId;
 };
 
 const ICONS: IconDef[] = [
-  { id: 'about', label: '关于我.md', kind: 'file', ext: 'md', win: 'about' },
-  { id: 'journey', label: '经历与教育', kind: 'folder', win: 'journey' },
-  { id: 'projects', label: '项目文件夹', kind: 'folder', win: 'projects' },
-  { id: 'research', label: '研究实验', kind: 'folder', win: 'research' },
-  { id: 'backing', label: 'Backing', kind: 'app', emoji: '📈', win: 'backing' },
-  { id: 'patent', label: '专利审核', kind: 'app', emoji: '📄', win: 'patent' },
-  { id: 'logistics', label: '货量预测', kind: 'app', emoji: '📦', win: 'logistics' },
-  { id: 'sayhi', label: 'Say Hi.app', kind: 'app', emoji: '✉️', win: 'sayhi' },
+  { id: 'about', label: '关于我', icon: 'about', win: 'about' },
+  { id: 'journey', label: '经历与教育', icon: 'journey', win: 'journey' },
+  { id: 'projects', label: '项目文件夹', icon: 'projects', win: 'projects' },
+  { id: 'research', label: '研究实验', icon: 'research', win: 'research' },
+  { id: 'backing', label: 'Backing', icon: 'backing', win: 'backing' },
+  { id: 'patent', label: '专利审核', icon: 'patent', win: 'patent' },
+  { id: 'logistics', label: '货量预测', icon: 'logistics', win: 'logistics' },
+  { id: 'sayhi', label: 'Say Hi', icon: 'sayhi', win: 'sayhi' },
 ];
 
 /* Deterministic star field so server and client agree. */
@@ -237,38 +234,37 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   /* Default desktop layout: three columns hugging the right edge. */
   const layout = useMemo(() => {
     const mobile = size.w > 0 && size.w <= 768;
-    const tileW = mobile ? 72 : 84;
-    const tileH = mobile ? 84 : 89;
-    const gapX = mobile ? 4 : 14;
-    const gapY = mobile ? 12 : 20;
     const right = mobile ? 8 : 26;
     const top0 = mobile ? 12 : 24;
+    const gapX = mobile ? 4 : 6;
+    const appW = mobile ? 60 : 72;
+    const appRow = mobile ? 88 : 96;
     const out: { id: string; x: number; y: number }[] = [];
 
+    const groupW = 4 * appW + 3 * gapX;
     ICONS.forEach((icon, i) => {
-      const col = i % 3;
-      const row = Math.floor(i / 3);
+      const col = i % 4;
+      const row = Math.floor(i / 4);
       out.push({
         id: icon.id,
-        x: Math.max(0, size.w - right - tileW - col * (tileW + gapX)),
-        y: top0 + row * (tileH + gapY),
+        x: Math.max(0, size.w - right - groupW + col * (appW + gapX)),
+        y: top0 + row * appRow,
       });
     });
 
-    /* repository files: four compact columns under the apps */
-    const repoW = mobile ? 58 : 64;
-    const repoH = mobile ? 72 : 78;
-    const repoGapX = mobile ? 3 : 6;
-    const repoGapY = mobile ? 6 : 8;
-    const rows = Math.ceil(ICONS.length / 3);
-    const startY = top0 + rows * (tileH + gapY) + (mobile ? 12 : 22);
+    /* repository files: same four columns, under the apps */
+    const repoW = mobile ? 60 : 72;
+    const repoRow = mobile ? 74 : 80;
+    const rows = Math.ceil(ICONS.length / 4);
+    const startY = top0 + rows * appRow + (mobile ? 12 : 24);
+    const repoGroupW = 4 * repoW + 3 * gapX;
     repoDetails.forEach((r, i) => {
       const col = i % 4;
       const row = Math.floor(i / 4);
       out.push({
         id: 'repo:' + r.name,
-        x: Math.max(0, size.w - right - repoW - col * (repoW + repoGapX)),
-        y: startY + row * (repoH + repoGapY),
+        x: Math.max(0, size.w - right - repoGroupW + col * (repoW + gapX)),
+        y: startY + row * repoRow,
       });
     });
 
@@ -332,13 +328,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     setWins((prev) => prev.map((w) => (w.key === key ? { ...w, z } : w)));
   };
 
-  const iconClick = (icon: IconDef) => {
-    if (icon.external) {
-      window.open(icon.external, '_blank', 'noopener');
-      return;
-    }
-    if (icon.win) openWin(icon.win);
-  };
+  const iconClick = (icon: IconDef) => openWin(icon.win);
 
   const startDrag = (e: React.PointerEvent<HTMLButtonElement>, iconId: string) => {
     suppressClick.current = false;
@@ -543,12 +533,13 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
                   iconClick(icon);
                 }}
               >
-                <span
-                  className={`dicon-art ${icon.kind}${icon.ext ? ` ext-${icon.ext}` : ''}`}
-                  data-ext={icon.ext ? icon.ext.toUpperCase() : undefined}
-                >
-                  {icon.emoji ? <span className="app-emoji">{icon.emoji}</span> : null}
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="dicon-img"
+                  src={`/images/apps/${icon.icon}.png`}
+                  alt=""
+                  draggable={false}
+                />
                 <span className="dicon-label">{icon.label}</span>
               </button>
             );

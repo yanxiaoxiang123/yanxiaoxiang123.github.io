@@ -51,13 +51,18 @@ export default function Terminal({
       timers.current.push(t);
     };
 
-    let clock = 450;
+    const CHAR_MS = 62; // typing speed per character
+    const AFTER_CMD = 340; // pause before the command's output
+    const LINE_MS = 300; // gap between output lines
+    const BLANK_MS = 130;
+
+    let clock = 620;
     introLines.forEach((line) => {
       if (line.type === 'cmd') {
         const cmd = line.text;
         const start = clock;
         for (let i = 1; i <= cmd.length; i += 1) {
-          at(start + i * 45, () => {
+          at(start + i * CHAR_MS, () => {
             setRows((prev) => {
               const next = prev.slice();
               const idx = next.findIndex(
@@ -70,18 +75,18 @@ export default function Terminal({
             });
           });
         }
-        clock = start + cmd.length * 45 + 260;
+        clock = start + cmd.length * CHAR_MS + AFTER_CMD;
       } else if (line.type === 'blank') {
         at(clock, () => setRows((prev) => [...prev, { type: 'blank' }]));
-        clock += 90;
+        clock += BLANK_MS;
       } else if (line.type === 'output') {
         const row: Row = { type: 'output', prefix: line.prefix, text: line.text };
         at(clock, () => setRows((prev) => [...prev, row]));
-        clock += 220;
+        clock += LINE_MS;
       } else {
         const row: Row = { type: 'gold', prefix: line.prefix, text: line.text };
         at(clock, () => setRows((prev) => [...prev, row]));
-        clock += 220;
+        clock += LINE_MS;
       }
     });
 

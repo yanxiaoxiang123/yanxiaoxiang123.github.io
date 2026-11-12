@@ -43,15 +43,15 @@ export default function ExitSection({ onRestart }: { onRestart: () => void }) {
       m.style.transform = `scale(${scale})`;
       m.style.opacity = '1';
 
-      if (a >= 0.3) {
-        const l = Math.min(1, (a - 0.3) / 0.3);
+      if (a >= 0.26) {
+        const l = Math.min(1, (a - 0.26) / 0.52);
         g.classList.add('visible');
         g.style.opacity = String(ease(l));
       } else {
         g.classList.remove('visible');
         g.style.opacity = '0';
       }
-      if (a >= 0.6) {
+      if (a >= 0.78) {
         m.style.transform = 'scale(1)';
         g.style.opacity = '1';
         g.classList.add('visible');

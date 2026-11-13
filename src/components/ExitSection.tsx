@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { createMotionHint, browserHintScheduler } from '@/lib/motion-hint';
 
 /**
  * Scroll-driven exit: the desktop screen starts filling the viewport and
@@ -18,6 +19,10 @@ export default function ExitSection({ onRestart, running, reducedMotion, childre
   useEffect(() => {
     if (!running || reducedMotion) return;
     let raf = 0;
+    let lastProgress: number | null = null;
+    const root = section.current;
+    if (!root) return;
+    const hint = createMotionHint(active => root.toggleAttribute('data-compositing', active), browserHintScheduler);
     const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
     const update = () => {
@@ -35,6 +40,9 @@ export default function ExitSection({ onRestart, running, reducedMotion, childre
       if (range <= 0) return;
 
       const a = Math.max(0, Math.min(1, scrolled / range));
+      if (a > 0 && a < 0.78 && lastProgress !== null && a !== lastProgress) hint.pulse();
+      else if (a === 0 || a >= 0.78) hint.clear();
+      lastProgress = a;
       const o = ease(Math.min(1, a / 0.5));
 
       const mobile = window.innerWidth <= 768;
@@ -72,6 +80,7 @@ export default function ExitSection({ onRestart, running, reducedMotion, childre
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       if (raf) cancelAnimationFrame(raf);
+      hint.clear();
     };
   }, [running, reducedMotion]);
 

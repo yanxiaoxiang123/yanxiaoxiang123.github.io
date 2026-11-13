@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { desktopMenu } from '@/data/navigation';
 import type { WinId, DesktopContent, RepositoryIcon } from '@/lib/desktop-content';
 import Xiaojing, { type PetEvent, type PetEventKind } from './Xiaojing';
@@ -48,6 +48,15 @@ function makeStars(count: number) {
 }
 
 const STARS = makeStars(46);
+// Match the CSS media query, including when scrollbars narrow the surface.
+const compactQuery = '(max-width: 768px)';
+const compactViewport = () => window.matchMedia(compactQuery).matches;
+const compactServerSnapshot = () => true;
+const subscribeCompact = (notify: () => void) => {
+  const query = window.matchMedia(compactQuery);
+  query.addEventListener('change', notify);
+  return () => query.removeEventListener('change', notify);
+};
 
 function Clock({ running }: { running: boolean }) {
   const [time, setTime] = useState('');
@@ -78,6 +87,22 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
   const [petEvent, setPetEvent] = useState<PetEvent | null>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [surfaceVisible, setSurfaceVisible] = useState(false);
+  const desktopActive = running && surfaceVisible;
+  const decorationRunning = desktopActive && !reducedMotion;
+  const compact = useSyncExternalStore(subscribeCompact, compactViewport, compactServerSnapshot);
+  const starCount = compact ? 16 : 46;
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    // Keep observing while paused so returning to the surface can wake the pet.
+    const observer = new IntersectionObserver(([entry]) => {
+      setSurfaceVisible(entry.isIntersecting && entry.intersectionRatio >= 0.01);
+    }, { threshold: 0.01 });
+    observer.observe(surface);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = surfaceRef.current;
@@ -140,12 +165,14 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
     setPetEvent({ kind, at: eventSeq.current });
   }, []);
 
+  // Discard transient decoration with the permission change, before it can replay.
+  if (!decorationRunning && bursts.length) setBursts([]);
   usePausableTimeout(() => setBursts([]), bursts.length ? 750 : null,
-    running, bursts.at(-1)?.id ?? 'no-bursts');
+    decorationRunning, bursts.at(-1)?.id ?? 'no-bursts');
   const burst = (e: React.MouseEvent) => {
-    if (!running || reducedMotion) return;
+    if (!decorationRunning) return;
     const id = Date.now() + Math.random();
-    setBursts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
+    setBursts((prev) => [...prev.slice(-5), { id, x: e.clientX, y: e.clientY }]);
   };
 
   const openWindow = useCallback(
@@ -190,7 +217,7 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
 
 
   return (
-    <div className="desktop">
+    <div className="desktop" data-motion={decorationRunning}>
       <div className="desktop-menubar">
         <span className="mb-logo">yanxx OS</span>
         {desktopMenu.map((m) => (
@@ -198,11 +225,11 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
             {m}
           </span>
         ))}
-        <Clock running={running} />
+        <Clock running={desktopActive} />
       </div>
 
       <div className="desktop-surface" ref={surfaceRef} onClick={burst}>
-        {STARS.map((s, i) => (
+        {STARS.slice(0, starCount).map((s, i) => (
           <span
             key={i}
             className="wp-star"
@@ -236,7 +263,7 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
           ))}
         </div>
 
-        <Xiaojing area={size} event={petEvent} running={running} reducedMotion={reducedMotion} />
+        <Xiaojing area={size} event={petEvent} running={desktopActive} reducedMotion={reducedMotion} />
 
         {wins.map((w) => (
           <DesktopWindow
@@ -261,7 +288,7 @@ export default function DesktopOS({ onGoWorks, running, reducedMotion, content, 
         <div className="scroll-on-hint">向下滑动，和这里说再见</div>
       </div>
 
-      {bursts.map((b) => (
+      {decorationRunning && bursts.map((b) => (
         <span
           key={b.id}
           className="click-star"

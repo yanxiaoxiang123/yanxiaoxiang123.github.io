@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePageActivity } from './PageActivity';
+import { createMotionHint, browserHintScheduler } from '@/lib/motion-hint';
 
 /* geometry — viewport heights unless the name says px */
 const STATION_TOP = 0.56; // first card's top at page start
@@ -130,6 +131,7 @@ export default function AboutFlight({ chapters, running: overrideRunning }: { ch
       let lastP: number | null = null;
       let vel = 0;
       let wasSettled = root.classList.contains('is-settled');
+      const hint = createMotionHint(active => root.toggleAttribute('data-compositing', active), browserHintScheduler);
 
       const update = () => {
         raf = 0;
@@ -142,6 +144,8 @@ export default function AboutFlight({ chapters, running: overrideRunning }: { ch
         const scrolled = -root.getBoundingClientRect().top;
         const p = total > 0 ? clamp01(scrolled / total) : 0;
         const dv = lastP === null ? 0 : p - lastP;
+        if (p > 0 && p < 1 && dv !== 0) hint.pulse();
+        else if (p === 0 || p === 1) hint.clear();
         lastP = p;
         vel = vel * 0.84 + dv * 0.16;
 
@@ -278,6 +282,7 @@ export default function AboutFlight({ chapters, running: overrideRunning }: { ch
         window.removeEventListener('resize', onResize);
         ro.disconnect();
         if (raf) cancelAnimationFrame(raf);
+        hint.clear();
       };
     };
 

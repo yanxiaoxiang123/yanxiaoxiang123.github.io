@@ -1,24 +1,27 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { contactInfo, goodbye } from '@/data/content';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 /**
  * Scroll-driven exit: the desktop screen starts filling the viewport and
  * shrinks back into a laptop while the goodbye terminal fades in.
  * Mirrors the reference site's exit-section behaviour.
  */
-export default function ExitSection({ onRestart }: { onRestart: () => void }) {
+export default function ExitSection({ onRestart, running, reducedMotion, children, footer, restartLabel }: {
+  onRestart: () => void; running: boolean; reducedMotion: boolean;
+  children: ReactNode; footer: string; restartLabel: string;
+}) {
   const section = useRef<HTMLElement>(null);
   const mac = useRef<HTMLDivElement>(null);
   const screen = useRef<HTMLDivElement>(null);
-  const ticking = useRef(false);
 
   useEffect(() => {
+    if (!running || reducedMotion) return;
+    let raf = 0;
     const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
     const update = () => {
-      ticking.current = false;
+      raf = 0;
       const s = section.current;
       const m = mac.current;
       const g = screen.current;
@@ -59,9 +62,7 @@ export default function ExitSection({ onRestart }: { onRestart: () => void }) {
     };
 
     const onScroll = () => {
-      if (ticking.current) return;
-      ticking.current = true;
-      requestAnimationFrame(update);
+      if (!raf) raf = requestAnimationFrame(update);
     };
 
     update();
@@ -70,11 +71,12 @@ export default function ExitSection({ onRestart }: { onRestart: () => void }) {
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [running, reducedMotion]);
 
   return (
-    <section className="exit-section" ref={section}>
+    <section className={`exit-section${!reducedMotion ? ' is-animated' : ''}`} ref={section}>
       <div className="exit-sticky">
         <div className="exit-macbook-wrapper" ref={mac}>
           <div className="exit-bezel">
@@ -89,40 +91,13 @@ export default function ExitSection({ onRestart }: { onRestart: () => void }) {
                 </div>
                 <div className="goodbye-body">
                   <div className="goodbye-terminal">
-                    {goodbye.lines.map((line) => (
-                      <div key={line.cmd}>
-                        <div className="gt-line">
-                          <span className="gt-prompt">$ </span>
-                          <span className="gt-cmd">{line.cmd}</span>
-                        </div>
-                        {line.cmd === 'cat contact.md' ? (
-                          <>
-                            <div className="gt-line gt-output">
-                              <a href={`mailto:${contactInfo.email}`}>{contactInfo.email}</a>
-                            </div>
-                            <div className="gt-line gt-output">
-                              <a href={contactInfo.github} target="_blank" rel="noreferrer noopener">
-                                github.com/yanxiaoxiang123
-                              </a>
-                            </div>
-                          </>
-                        ) : (
-                          <div className={`gt-line ${line.gold ? '' : 'gt-output'}`}>
-                            {line.gold ? (
-                              <span className="gt-gold">{line.out}</span>
-                            ) : (
-                              line.out
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {children}
                   </div>
                 </div>
                 <div className="goodbye-footer">
-                  {goodbye.footer}
+                  {footer}
                   <button type="button" className="goodbye-back" onClick={onRestart}>
-                    {goodbye.back}
+                    {restartLabel}
                   </button>
                 </div>
               </div>

@@ -1,64 +1,33 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTransformDrag } from '@/hooks/useTransformDrag';
+import type { Point } from '@/lib/frame-position';
+import { usePageActivity } from './PageActivity';
 
-/**
- * A draggable sticker that springs back to its original spot when released.
- */
-export default function Sticker({
-  src,
-  alt,
-  size,
-  rotate = 0,
-  style,
-}: {
+const ORIGIN: Point = { x: 0, y: 0 };
+
+/** The outer layer owns drag translation; the image keeps its authored rotation. */
+export default function Sticker({ src, alt, size, rotate = 0, style, running: overrideRunning }: {
   src: string;
   alt: string;
   size: number;
   rotate?: number;
-  style?: React.CSSProperties;
+  style?: Omit<React.CSSProperties, 'transform'>;
+  running?: boolean;
 }) {
-  const [off, setOff] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const origin = useRef({ x: 0, y: 0 });
-
+  const activity = usePageActivity();
+  const running = overrideRunning ?? activity.running;
+  const [position, setPosition] = useState(ORIGIN);
+  const elementRef = useRef<HTMLSpanElement>(null);
+  const drag = useTransformDrag(elementRef, {
+    position, enabled: running, returnToOrigin: true, onCommit: setPosition,
+  });
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={alt}
-      draggable={false}
-      className={`sticker${dragging ? ' is-dragging' : ''}`}
-      style={
-        {
-          ...style,
-          width: size,
-          height: 'auto',
-          transform: `translate(${off.x}px, ${off.y}px) rotate(${rotate}deg)`,
-          zIndex: dragging ? 60 : undefined,
-        } as React.CSSProperties
-      }
-      onPointerDown={(e) => {
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId);
-        } catch {
-          /* synthetic pointer events have no capture target */
-        }
-        origin.current = { x: e.clientX - off.x, y: e.clientY - off.y };
-        setDragging(true);
-      }}
-      onPointerMove={(e) => {
-        if (!dragging) return;
-        setOff({ x: e.clientX - origin.current.x, y: e.clientY - origin.current.y });
-      }}
-      onPointerUp={() => {
-        setDragging(false);
-        setOff({ x: 0, y: 0 });
-      }}
-      onPointerCancel={() => {
-        setDragging(false);
-        setOff({ x: 0, y: 0 });
-      }}
-    />
+    <span className="sticker" ref={elementRef} {...drag.handlers} style={{ ...style, width: size }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="sticker-image" src={src} alt={alt} draggable={false}
+        style={{ transform: `rotate(${rotate}deg)` }} />
+    </span>
   );
 }

@@ -8,44 +8,9 @@ export const profile = {
   meta: '常州大学 · 计算机硕士 · 2027 届 · 开放实习与校招',
 };
 
-/* ---------- 终端开场 ---------- */
-
-export type IntroLine =
-  | { type: 'cmd'; text: string }
-  | { type: 'output'; prefix: string; text: string }
-  | { type: 'gold'; prefix: string; text: string }
-  | { type: 'blank' };
-
-export const introLines: IntroLine[] = [
-  { type: 'cmd', text: 'whoami' },
-  { type: 'output', prefix: '> ', text: '晏晓翔 · Yan Xiaoxiang' },
-  { type: 'blank' },
-  { type: 'cmd', text: 'cat about.md' },
-  { type: 'output', prefix: '> ', text: '把模型、数据与工程，做成能用的系统' },
-  { type: 'output', prefix: '  ', text: '全栈 / AI Agent / 时间序列与视觉' },
-  { type: 'output', prefix: '  ', text: '常州大学 · 计算机硕士 · 2027 届' },
-  { type: 'blank' },
-  { type: 'cmd', text: 'echo "Wait for A Job"' },
-  { type: 'gold', prefix: '> ', text: 'Wait for A Job' },
-  { type: 'blank' },
-  { type: 'cmd', text: 'open yanxx-os.app' },
-];
-
-export const bootCmd = 'yanxx-os.app';
-export const progressBlocks = 12;
-export const progressStepMs = 80;
-
-/* ---------- 桌面 ---------- */
-
-export type TabId = 'home' | 'works' | 'about';
-
-export const tabs: { id: TabId; label: string; num: string }[] = [
-  { id: 'home', label: '主页', num: '01' },
-  { id: 'works', label: '项目', num: '02' },
-  { id: 'about', label: '关于', num: '03' },
-];
-
-export const desktopMenu = ['主页', '关于', '项目', '做法'];
+/* Small interactive datasets have their own client-safe modules. */
+export { introLines, bootCmd, progressBlocks, progressStepMs, type IntroLine } from './intro';
+export { tabs, desktopMenu, type TabId } from './navigation';
 
 export type Project = {
   slug: string;

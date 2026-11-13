@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { about, research } from '@/data/content';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { usePageActivity } from './PageActivity';
 
 /* geometry — viewport heights unless the name says px */
 const STATION_TOP = 0.56; // first card's top at page start
@@ -48,13 +48,45 @@ function stringPath(pts: Pt[]) {
   return d;
 }
 
-export default function AboutFlight() {
+export type AboutChapter = { id: string; label: string; heading: string; body: ReactNode };
+
+export default function AboutFlight({ chapters, running: overrideRunning }: { chapters: AboutChapter[]; running?: boolean }) {
+  const activity = usePageActivity();
+  const running = overrideRunning ?? activity.running;
   const rootRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLImageElement>(null);
   const lineRef = useRef<SVGPathElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const readerRef = useRef<HTMLDialogElement>(null);
+  const readerBodyRef = useRef<HTMLDivElement>(null);
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [activeChapter, setActiveChapter] = useState(0);
+
+  const selectChapter = (index: number) => {
+    setActiveChapter(index);
+    readerBodyRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  const openReader = (index: number) => {
+    selectChapter(index);
+    setReaderOpen(true);
+  };
+
+  useEffect(() => {
+    const reader = readerRef.current;
+    if (!readerOpen || !reader) return;
+    const trigger = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    reader.showModal();
+    return () => {
+      reader.close();
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus({ preventScroll: true });
+    };
+  }, [readerOpen]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -62,254 +94,240 @@ export default function AboutFlight() {
     const plane = planeRef.current;
     const line = lineRef.current;
     const paper = paperRef.current;
-    if (!root || !sticky || !plane || !line) return;
+    if (!running || !root || !sticky || !plane || !line) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      root.classList.add('is-static');
-      return;
-    }
-    root.classList.add('has-js');
+    const compact = window.matchMedia('(max-width: 768px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const cards = cardRefs.current;
 
-    const heights: number[] = [];
-    const measure = () => {
-      cardRefs.current.forEach((el, i) => {
-        heights[i] = el && el.offsetHeight ? el.offsetHeight : 320;
+    const resetPresentation = () => {
+      root.classList.remove('has-js', 'is-settled');
+      cards.forEach((card) => {
+        card?.style.removeProperty('transform');
+        card?.style.removeProperty('z-index');
       });
+      plane.style.removeProperty('transform');
+      paper?.style.removeProperty('opacity');
+      line.removeAttribute('d');
     };
-    measure();
-
-    let raf = 0;
-    let lastP = 0;
-    let vel = 0;
-    let wasSettled = false;
-
-    const update = () => {
-      raf = 0;
-      const vw = sticky.clientWidth;
-      const vh = sticky.clientHeight;
-      if (!vw || !vh) return;
-      if (!heights[0]) measure();
-
-      const total = root.offsetHeight - vh;
-      const scrolled = -root.getBoundingClientRect().top;
-      const p = total > 0 ? clamp01(scrolled / total) : 0;
-      const dv = p - lastP;
-      lastP = p;
-      vel = vel * 0.84 + dv * 0.16;
-      const small = vw <= 768;
-
-      const cx = vw * 0.5;
-      const world0 = vh * STATION_TOP;
-      const gap = vh * STATION_GAP;
-      const tallest = Math.max(0, ...heights) || 320;
-      const trainGap = Math.max(vh * TRAIN_GAP, tallest * TRAIN_SCALE + 22);
-      const amp = small ? 0 : Math.min(210, vw * 0.155);
-      const finalAmp = small ? vw * 0.22 : Math.min(200, vw * 0.16);
-      const finalScale = small ? 0.66 : 0.74;
-
-      /* one serpentine string: the station line and the plane ride the same wave */
-      const wave = (wy: number) =>
-        cx + amp * Math.sin((Math.PI * (wy - world0)) / gap - Math.PI / 2);
-
-      const descend = smooth(0, 0.82, p);
-      const gather = smooth(0.78, 0.97, p);
-      const land = smooth(0.82, 1, p);
-
-      const hookY = vh * (PLANE_START + PLANE_RISE * descend);
-      const planeWindowY = hookY - Math.max(0, vel) * 120;
-      const planeY = lerp(planeWindowY, vh * 0.9, land);
-      const planeX = lerp(wave(scrolled + planeWindowY), cx + finalAmp, land);
-
-      if (paper) paper.style.opacity = smooth(0.7, 0.88, p).toFixed(3);
-
-      const cards = cardRefs.current;
-      const n = cards.length;
-      const hk: number[] = [];
-      const slot: number[] = [];
-
-      /* a card is hooked the moment the plane reaches its pin */
-      for (let i = 0; i < n; i++) {
-        const stationY = vh * (STATION_TOP + STATION_GAP * i) - scrolled;
-        hk[i] = 1 - smooth(0, HOOK_SPAN * vh, stationY - hookY);
+    // Pausing keeps the current pose; changing layout restores document flow.
+    const startAnimation = () => {
+      if (compact.matches || reducedMotion.matches) {
+        resetPresentation();
+        return () => {};
       }
-      /* earlier pickups are pushed further up the string */
-      for (let i = 0; i < n; i++) {
-        let s = 0;
-        for (let j = i + 1; j < n; j++) s += hk[j];
-        slot[i] = s;
-      }
+      root.classList.add('has-js');
 
-      const pins: Pt[] = [];
+      const heights: number[] = [];
+      const measure = () => {
+        cardRefs.current.forEach((el, i) => {
+          heights[i] = el && el.offsetHeight ? el.offsetHeight : 320;
+        });
+      };
+      measure();
 
-      cards.forEach((card, i) => {
-        if (!card) return;
-        const stationWorld = vh * (STATION_TOP + STATION_GAP * i);
-        const sy = stationWorld - scrolled;
-        const stationRot = (i % 2 === 0 ? -1.6 : 1.6) + Math.sin(p * 6 + i * 1.9) * 0.5;
+      let raf = 0;
+      let lastP: number | null = null;
+      let vel = 0;
+      let wasSettled = root.classList.contains('is-settled');
 
-        /* towed: hangs on the same string, one gap behind the card below it */
-        const towWorld = scrolled + planeY - (slot[i] + 1) * trainGap;
-        const tx = wave(towWorld) + Math.sin(p * 12 + i * 1.3) * 5 + vel * 420;
-        const ty = towWorld - scrolled;
-        const towRot = Math.sin(p * 10 + i * 1.5) * 2.2 + vel * 180;
+      const update = () => {
+        raf = 0;
+        const vw = sticky.clientWidth;
+        const vh = sticky.clientHeight;
+        if (!vw || !vh) return;
+        if (!heights[0]) measure();
 
-        const e = backOut(hk[i]);
-        const swing = Math.sin(hk[i] * Math.PI * 3) * (1 - hk[i]);
+        const total = root.offsetHeight - vh;
+        const scrolled = -root.getBoundingClientRect().top;
+        const p = total > 0 ? clamp01(scrolled / total) : 0;
+        const dv = lastP === null ? 0 : p - lastP;
+        lastP = p;
+        vel = vel * 0.84 + dv * 0.16;
 
-        let x = lerp(wave(stationWorld), tx, e) + swing * 16;
-        let y = lerp(sy, ty, e);
-        let rot = lerp(stationRot, towRot, e) + swing * 6;
-        let scale = lerp(1, TRAIN_SCALE, e) + Math.sin(hk[i] * Math.PI) * 0.05;
+        const cx = vw * 0.5;
+        const world0 = vh * STATION_TOP;
+        const gap = vh * STATION_GAP;
+        const tallest = Math.max(0, ...heights) || 320;
+        const trainGap = Math.max(vh * TRAIN_GAP, tallest * TRAIN_SCALE + 22);
+        const amp = Math.min(210, vw * 0.155);
+        const finalAmp = Math.min(200, vw * 0.16);
+        const finalScale = 0.74;
 
-        /* the whole string settles onto one page, staggered, never stacked */
-        const fx = cx + (i % 2 === 0 ? -1 : 1) * finalAmp;
-        const fy = vh * FINAL_TOP + i * vh * FINAL_STEP;
-        const fRot = (i % 2 === 0 ? -1 : 1) * 2.6;
+        /* one serpentine string: the station line and the plane ride the same wave */
+        const wave = (wy: number) =>
+          cx + amp * Math.sin((Math.PI * (wy - world0)) / gap - Math.PI / 2);
 
-        x = lerp(x, fx, gather);
-        y = lerp(y, fy, gather);
-        rot = lerp(rot, fRot, gather);
-        scale = lerp(scale, finalScale, gather);
+        const descend = smooth(0, 0.82, p);
+        const gather = smooth(0.78, 0.97, p);
+        const land = smooth(0.82, 1, p);
 
-        card.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
-        card.style.zIndex = `${20 - (gather > 0.45 ? i : Math.round(slot[i]))}`;
+        const hookY = vh * (PLANE_START + PLANE_RISE * descend);
+        const planeWindowY = hookY - Math.max(0, vel) * 120;
+        const planeY = lerp(planeWindowY, vh * 0.9, land);
+        const planeX = lerp(wave(scrolled + planeWindowY), cx + finalAmp, land);
 
-        pins.push({ x, y });
-      });
+        if (paper) paper.style.opacity = smooth(0.7, 0.88, p).toFixed(3);
 
-      /* one string: through the towed cards, the plane, then the waiting ones */
-      const sorted = pins.slice().sort((a, b) => a.y - b.y);
-      const path: Pt[] = [{ x: cx, y: -40 }];
-      let inserted = false;
-      for (const pt of sorted) {
-        if (!inserted && pt.y > planeY) {
-          path.push({ x: planeX, y: planeY });
-          inserted = true;
+        const cards = cardRefs.current;
+        const n = cards.length;
+        const hk: number[] = [];
+        const slot: number[] = [];
+
+        /* a card is hooked the moment the plane reaches its pin */
+        for (let i = 0; i < n; i++) {
+          const stationY = vh * (STATION_TOP + STATION_GAP * i) - scrolled;
+          hk[i] = 1 - smooth(0, HOOK_SPAN * vh, stationY - hookY);
         }
-        path.push(pt);
-      }
-      if (!inserted) path.push({ x: planeX, y: planeY });
-      const tail = path[path.length - 1];
-      if (tail.y < vh - 24) path.push({ x: tail.x, y: Math.min(vh + 80, tail.y + 110) });
+        /* earlier pickups are pushed further up the string */
+        for (let i = 0; i < n; i++) {
+          let s = 0;
+          for (let j = i + 1; j < n; j++) s += hk[j];
+          slot[i] = s;
+        }
 
-      line.setAttribute('d', stringPath(path));
+        const pins: Pt[] = [];
 
-      /* keep the nose on the string's tangent — flying down, not drifting */
-      const phase = (Math.PI * (scrolled + planeWindowY - world0)) / gap;
-      const tangent = ((amp * Math.PI) / gap) * Math.sin(phase);
-      const flightAngle = (Math.atan2(1, tangent) * 180) / Math.PI + 25;
-      const angle = lerp(flightAngle, 66, land);
-      plane.style.transform = `translate3d(${planeX.toFixed(1)}px, ${planeY.toFixed(1)}px, 0) rotate(${angle.toFixed(1)}deg)`;
+        cards.forEach((card, i) => {
+          if (!card) return;
+          const stationWorld = vh * (STATION_TOP + STATION_GAP * i);
+          const sy = stationWorld - scrolled;
+          const stationRot = (i % 2 === 0 ? -1.6 : 1.6) + Math.sin(p * 6 + i * 1.9) * 0.5;
 
-      const settled = gather > 0.55;
-      if (settled !== wasSettled) {
-        root.classList.toggle('is-settled', settled);
-        wasSettled = settled;
-      }
+          /* towed: hangs on the same string, one gap behind the card below it */
+          const towWorld = scrolled + planeY - (slot[i] + 1) * trainGap;
+          const tx = wave(towWorld) + Math.sin(p * 12 + i * 1.3) * 5 + vel * 420;
+          const ty = towWorld - scrolled;
+          const towRot = Math.sin(p * 10 + i * 1.5) * 2.2 + vel * 180;
+
+          const e = backOut(hk[i]);
+          const swing = Math.sin(hk[i] * Math.PI * 3) * (1 - hk[i]);
+
+          let x = lerp(wave(stationWorld), tx, e) + swing * 16;
+          let y = lerp(sy, ty, e);
+          let rot = lerp(stationRot, towRot, e) + swing * 6;
+          let scale = lerp(1, TRAIN_SCALE, e) + Math.sin(hk[i] * Math.PI) * 0.05;
+
+          /* the whole string settles onto one page, staggered, never stacked */
+          const fx = cx + (i % 2 === 0 ? -1 : 1) * finalAmp;
+          const fy = vh * FINAL_TOP + i * vh * FINAL_STEP;
+          const fRot = (i % 2 === 0 ? -1 : 1) * 2.6;
+
+          x = lerp(x, fx, gather);
+          y = lerp(y, fy, gather);
+          rot = lerp(rot, fRot, gather);
+          scale = lerp(scale, finalScale, gather);
+
+          card.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+          card.style.zIndex = `${20 - (gather > 0.45 ? i : Math.round(slot[i]))}`;
+
+          pins.push({ x, y });
+        });
+
+        /* one string: through the towed cards, the plane, then the waiting ones */
+        const sorted = pins.slice().sort((a, b) => a.y - b.y);
+        const path: Pt[] = [{ x: cx, y: -40 }];
+        let inserted = false;
+        for (const pt of sorted) {
+          if (!inserted && pt.y > planeY) {
+            path.push({ x: planeX, y: planeY });
+            inserted = true;
+          }
+          path.push(pt);
+        }
+        if (!inserted) path.push({ x: planeX, y: planeY });
+        const tail = path[path.length - 1];
+        if (tail.y < vh - 24) path.push({ x: tail.x, y: Math.min(vh + 80, tail.y + 110) });
+
+        line.setAttribute('d', stringPath(path));
+
+        /* keep the nose on the string's tangent — flying down, not drifting */
+        const phase = (Math.PI * (scrolled + planeWindowY - world0)) / gap;
+        const tangent = ((amp * Math.PI) / gap) * Math.sin(phase);
+        const flightAngle = (Math.atan2(1, tangent) * 180) / Math.PI + 25;
+        const angle = lerp(flightAngle, 66, land);
+        plane.style.transform = `translate3d(${planeX.toFixed(1)}px, ${planeY.toFixed(1)}px, 0) rotate(${angle.toFixed(1)}deg)`;
+
+        const settled = gather > 0.55;
+        if (settled !== wasSettled) {
+          root.classList.toggle('is-settled', settled);
+          wasSettled = settled;
+        }
+      };
+
+      const onScroll = () => {
+        if (!raf) raf = requestAnimationFrame(update);
+      };
+      const onResize = () => {
+        measure();
+        onScroll();
+      };
+
+      update();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onResize);
+      const ro = new ResizeObserver(() => {
+        measure();
+        onScroll();
+      });
+      ro.observe(sticky);
+      cardRefs.current.forEach((el) => el && ro.observe(el));
+
+      return () => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onResize);
+        ro.disconnect();
+        if (raf) cancelAnimationFrame(raf);
+      };
     };
 
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+    let stopAnimation = startAnimation();
+    const onModeChange = () => {
+      stopAnimation();
+      resetPresentation();
+      stopAnimation = startAnimation();
     };
-    const onResize = () => {
-      measure();
-      onScroll();
-    };
-
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    const ro = new ResizeObserver(() => {
-      measure();
-      onScroll();
-    });
-    ro.observe(sticky);
-    cardRefs.current.forEach((el) => el && ro.observe(el));
-
+    compact.addEventListener('change', onModeChange);
+    reducedMotion.addEventListener('change', onModeChange);
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-      ro.disconnect();
-      if (raf) cancelAnimationFrame(raf);
+      stopAnimation();
+      compact.removeEventListener('change', onModeChange);
+      reducedMotion.removeEventListener('change', onModeChange);
     };
-  }, []);
+  }, [running]);
 
-  const cards = [
-    <article className="fl-stop" key="intro" ref={(el) => { cardRefs.current[0] = el; }}>
-      <div className="fl-card">
-        <span className="fl-pin" aria-hidden="true" />
-        <div className="section-label">{about.intro.label}</div>
-        <h1 className="fl-title">{about.intro.heading}</h1>
-        <p className="fl-body">{about.intro.body}</p>
-      </div>
-    </article>,
-    <article className="fl-stop" key="values" ref={(el) => { cardRefs.current[1] = el; }}>
-      <div className="fl-card">
-        <span className="fl-pin" aria-hidden="true" />
-        <div className="section-label">{about.values.label}</div>
-        <h2 className="fl-title sm">{about.values.heading}</h2>
-        <ul className="fl-list">
-          {about.values.items.map((item) => (
-            <li key={item.title}>
-              <b>{item.title}</b>
-              <span>{item.text}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </article>,
-    <article className="fl-stop" key="journey" ref={(el) => { cardRefs.current[2] = el; }}>
-      <div className="fl-card">
-        <span className="fl-pin" aria-hidden="true" />
-        <div className="section-label">{about.timeline.label}</div>
-        <h2 className="fl-title sm">{about.timeline.heading}</h2>
-        <ul className="fl-timeline">
-          {about.timeline.items.map((item) => (
-            <li key={item.date + item.title}>
-              <span className="fl-date">{item.date}</span>
-              <b>{item.title} · {item.place}</b>
-              <span>{item.text}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </article>,
-    <article className="fl-stop" key="practice" ref={(el) => { cardRefs.current[3] = el; }}>
-      <div className="fl-card">
-        <span className="fl-pin" aria-hidden="true" />
-        <div className="section-label">实践与实验</div>
-        <h2 className="fl-title sm">在应用之外</h2>
-        <ul className="fl-list">
-          {research.map((item) => (
-            <li key={item.title}>
-              <b>{item.title}</b>
-              <span>{item.text}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </article>,
-    <article className="fl-stop" key="now" ref={(el) => { cardRefs.current[4] = el; }}>
-      <div className="fl-card">
-        <span className="fl-pin" aria-hidden="true" />
-        <div className="section-label">{about.now.label}</div>
-        <h2 className="fl-title sm">{about.now.heading}</h2>
-        <ul className="fl-now">
-          {about.now.items.map((item) => (
-            <li key={item.title}>
-              <b>{item.title}</b>
-              <span>{item.sub}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="todo-note">{about.now.todo}</div>
-      </div>
-    </article>,
-  ];
+  const cards = chapters.map((chapter, index) => {
+    const Heading = index === 0 ? 'h1' : 'h2';
+    return (
+      <article className="fl-stop" key={chapter.id} aria-labelledby={`fl-${chapter.id}`}
+        ref={(el) => { cardRefs.current[index] = el; }}>
+        <div className="fl-card">
+          <span className="fl-pin" aria-hidden="true" />
+          <div className="section-label">{chapter.label}</div>
+          <Heading className={`fl-title${index === 0 ? '' : ' sm'}`} id={`fl-${chapter.id}`}>
+            {chapter.heading}
+          </Heading>
+          {chapter.body}
+          <button className="fl-read-button" type="button" aria-haspopup="dialog"
+            aria-controls="fl-reader" aria-label={`展开阅读：${chapter.heading}`}
+            onClick={() => openReader(index)}>
+            展开阅读 <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </article>
+    );
+  });
 
   return (
     <div className="flight" ref={rootRef}>
       <div className="flight-sticky" ref={stickyRef}>
+        <div className="fl-reading-entry">
+          <p>关于我</p>
+          <button className="fl-read-button" type="button" aria-haspopup="dialog"
+            aria-controls="fl-reader" onClick={() => openReader(0)}>
+            完整阅读 <span aria-hidden="true">↗</span>
+          </button>
+        </div>
         <div className="fl-sky" aria-hidden="true" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="fl-deco fl-deco-top" src="/images/flight/cloud-bank.png" alt="" aria-hidden="true" draggable={false} />
@@ -329,6 +347,41 @@ export default function AboutFlight() {
           <span className="fl-paper-fold" />
         </div>
       </div>
+
+      <dialog className="fl-reader" id="fl-reader" ref={readerRef}
+        aria-labelledby="fl-reader-title" onClose={() => setReaderOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key !== 'Tab') return;
+          const stops = event.currentTarget.querySelectorAll<HTMLElement>('button, [tabindex="0"]');
+          const first = stops[0];
+          const last = stops[stops.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }}>
+        <header className="fl-reader-header">
+          <p>关于我 · 完整阅读</p>
+          <button className="fl-read-button" type="button" autoFocus
+            onClick={() => readerRef.current?.close()}>关闭阅读</button>
+        </header>
+        <nav className="fl-reader-nav" aria-label="关于我章节">
+          {chapters.map((chapter, index) => (
+            <button className="fl-read-button" type="button" key={chapter.id}
+              aria-pressed={activeChapter === index} onClick={() => selectChapter(index)}>
+              {chapter.label}
+            </button>
+          ))}
+        </nav>
+        <div className="fl-reader-body" ref={readerBodyRef} tabIndex={0}
+          role="region" aria-labelledby="fl-reader-title">
+          <h2 className="fl-title" id="fl-reader-title">{chapters[activeChapter].heading}</h2>
+          {chapters[activeChapter].body}
+        </div>
+      </dialog>
     </div>
   );
 }

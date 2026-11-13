@@ -1,19 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { about, contactInfo, desktopMenu, profile, projects, repoDetails, research } from '@/data/content';
+import { desktopMenu } from '@/data/navigation';
+import type { WinId, DesktopContent, RepositoryIcon } from '@/lib/desktop-content';
 import Xiaojing, { type PetEvent, type PetEventKind } from './Xiaojing';
-
-type WinId =
-  | 'about'
-  | 'journey'
-  | 'projects'
-  | 'research'
-  | 'sayhi'
-  | 'backing'
-  | 'patent'
-  | 'logistics'
-  | 'repo';
+import { usePausableTimeout } from '@/hooks/usePausableTimeout';
+import DesktopIcon from './DesktopIcon';
+import DesktopWindow from './DesktopWindow';
 
 type IconDef = {
   id: string;
@@ -56,9 +49,10 @@ function makeStars(count: number) {
 
 const STARS = makeStars(46);
 
-function Clock() {
+function Clock({ running }: { running: boolean }) {
   const [time, setTime] = useState('');
   useEffect(() => {
+    if (!running) return;
     const tick = () => {
       const d = new Date();
       setTime(
@@ -68,139 +62,14 @@ function Clock() {
     tick();
     const id = setInterval(tick, 20_000);
     return () => clearInterval(id);
-  }, []);
+  }, [running]);
   return <span className="mb-clock">{time || '--:--'}</span>;
 }
 
-function Window({
-  id,
-  title,
-  initial,
-  z,
-  onClose,
-  onFocus,
-  children,
-}: {
-  id: WinId;
-  title: string;
-  initial: { x: number; y: number };
-  z: number;
-  onClose: () => void;
-  onFocus: () => void;
-  children: React.ReactNode;
+export default function DesktopOS({ onGoWorks, running, reducedMotion, content, repositories }: {
+  onGoWorks: () => void; running: boolean; reducedMotion: boolean;
+  content: DesktopContent; repositories: RepositoryIcon[];
 }) {
-  const [pos, setPos] = useState(initial);
-  const drag = useRef<{ dx: number; dy: number } | null>(null);
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    onFocus();
-    drag.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!drag.current) return;
-    const w = Math.min(520, window.innerWidth * 0.92);
-    const x = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - drag.current.dx));
-    const y = Math.max(36, Math.min(window.innerHeight - 90, e.clientY - drag.current.dy));
-    setPos({ x, y });
-  };
-  const endDrag = () => {
-    drag.current = null;
-  };
-
-  return (
-    <div
-      className="os-window"
-      style={{ left: pos.x, top: pos.y, zIndex: z }}
-      role="dialog"
-      aria-label={title}
-      data-win={id}
-      onPointerDown={onFocus}
-    >
-      <div
-        className="os-dragbar"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      />
-      <div className="os-traffic">
-        <span
-          className="tl-close"
-          role="button"
-          tabIndex={0}
-          aria-label="关闭"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') onClose();
-          }}
-        />
-        <span className="tl-min" />
-        <span className="tl-max" />
-      </div>
-      <div className="os-body">{children}</div>
-    </div>
-  );
-}
-
-function RepoWindow({ name }: { name: string }) {
-  const r = repoDetails.find((x) => x.name === name);
-  if (!r) return null;
-  return (
-    <>
-      <div className="win-title">{r.name}</div>
-      <div className="win-sub">
-        {r.meta}
-        {r.stars > 0 ? ` · ★ ${r.stars}` : ''}
-      </div>
-      <p className="win-body-text">{r.summary}</p>
-      <div className="win-sub" style={{ marginBottom: 8 }}>
-        {r.stack}
-      </div>
-      <ul className="win-list">
-        {r.points.map((pt) => (
-          <li key={pt}>{pt}</li>
-        ))}
-      </ul>
-      <div className="win-links" style={{ marginTop: 16 }}>
-        <a
-          href={`https://github.com/yanxiaoxiang123/${r.name}`}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          在 GitHub 打开 →
-        </a>
-      </div>
-    </>
-  );
-}
-
-function ProjectWindow({ slug }: { slug: string }) {
-  const p = projects.find((x) => x.slug === slug);
-  if (!p) return null;
-  return (
-    <>
-      <div className="win-title">{p.title}</div>
-      <div className="win-sub">
-        {p.role} · {p.period}
-      </div>
-      <p className="win-body-text">{p.summary}</p>
-      <div className="win-sub" style={{ marginBottom: 8 }}>
-        {p.stack}
-      </div>
-      <ul className="win-list">
-        {p.points.map((pt) => (
-          <li key={pt}>{pt}</li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
-export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   const [wins, setWins] = useState<
     { key: string; id: WinId; repo?: string; x: number; y: number; z: number }[]
   >([]);
@@ -209,27 +78,16 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
   const [petEvent, setPetEvent] = useState<PetEvent | null>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [moved, setMoved] = useState<Record<string, { x: number; y: number }>>({});
-  const [activeIcon, setActiveIcon] = useState<string | null>(null);
-  const dragRef = useRef<{
-    id: string;
-    sx: number;
-    sy: number;
-    ox: number;
-    oy: number;
-    moved: boolean;
-  } | null>(null);
-  const suppressClick = useRef(false);
 
   useEffect(() => {
     const el = surfaceRef.current;
-    if (!el) return;
+    if (!running || !el) return;
     const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [running]);
 
   /* Default desktop layout: three columns hugging the right edge. */
   const layout = useMemo(() => {
@@ -258,7 +116,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     const rows = Math.ceil(ICONS.length / 4);
     const startY = top0 + rows * appRow + (mobile ? 12 : 24);
     const repoGroupW = 4 * repoW + 3 * gapX;
-    repoDetails.forEach((r, i) => {
+    repositories.forEach((r, i) => {
       const col = i % 4;
       const row = Math.floor(i / 4);
       out.push({
@@ -269,10 +127,9 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     });
 
     return out;
-  }, [size.w]);
+  }, [size.w, repositories]);
 
   const posOf = (id: string) => {
-    if (moved[id]) return moved[id];
     const l = layout.find((p) => p.id === id);
     return l ? { x: l.x, y: l.y } : { x: 0, y: 0 };
   };
@@ -283,10 +140,12 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     setPetEvent({ kind, at: eventSeq.current });
   }, []);
 
+  usePausableTimeout(() => setBursts([]), bursts.length ? 750 : null,
+    running, bursts.at(-1)?.id ?? 'no-bursts');
   const burst = (e: React.MouseEvent) => {
+    if (!running || reducedMotion) return;
     const id = Date.now() + Math.random();
     setBursts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
-    setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 750);
   };
 
   const openWindow = useCallback(
@@ -306,8 +165,9 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
             id,
             repo,
             z,
-            x: Math.max(24, Math.min(190 + n * 44, window.innerWidth - 560)),
-            y: Math.max(48, 66 + n * 34),
+            x: window.innerWidth <= 768 ? window.innerWidth * 0.04
+              : Math.max(24, Math.min(190 + n * 44, window.innerWidth - 560)),
+            y: window.innerWidth <= 768 ? 104 : Math.max(48, 66 + n * 34),
           },
         ];
       });
@@ -328,149 +188,6 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
     setWins((prev) => prev.map((w) => (w.key === key ? { ...w, z } : w)));
   };
 
-  const iconClick = (icon: IconDef) => openWin(icon.win);
-
-  const startDrag = (e: React.PointerEvent<HTMLButtonElement>, iconId: string) => {
-    suppressClick.current = false;
-    const p = posOf(iconId);
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      /* synthetic pointer events have no capture target */
-    }
-    dragRef.current = {
-      id: iconId,
-      sx: e.clientX,
-      sy: e.clientY,
-      ox: p.x,
-      oy: p.y,
-      moved: false,
-    };
-    setActiveIcon(iconId);
-    tellPet('drag');
-  };
-
-  const moveDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const d = dragRef.current;
-    if (!d) return;
-    const dx = e.clientX - d.sx;
-    const dy = e.clientY - d.sy;
-    if (!d.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
-    d.moved = true;
-    const maxX = Math.max(0, size.w - 90);
-    const maxY = Math.max(0, size.h - 110);
-    const x = Math.max(0, Math.min(maxX, d.ox + dx));
-    const y = Math.max(0, Math.min(maxY, d.oy + dy));
-    setMoved((prev) => ({ ...prev, [d.id]: { x, y } }));
-  };
-
-  const endDrag = () => {
-    if (dragRef.current?.moved) {
-      suppressClick.current = true;
-      tellPet('drop');
-    }
-    dragRef.current = null;
-    setActiveIcon(null);
-  };
-
-  const content = useMemo<Partial<Record<WinId, React.ReactNode>>>(
-    () => ({
-      about: (
-        <>
-          <div className="win-title">关于我.md</div>
-          <div className="win-sub"># 晏晓翔 · Yan Xiaoxiang</div>
-          <p className="win-body-text">
-            常州大学计算机硕士在读，探索数据、算法与可用的系统。我的经历横跨数据处理、算法研究、系统开发与交付，
-            习惯和 AI Agent 搭档，从需求一路做到能上线的形态。
-          </p>
-          <p className="win-body-text">比起给自己一个单一的标签，我更希望通过做过的事，让你认识我。</p>
-          <div className="win-links">
-            <a href={`mailto:${profile.email}`}>发送邮件</a>
-            <a href={profile.github} target="_blank" rel="noreferrer noopener">
-              GitHub
-            </a>
-          </div>
-        </>
-      ),
-      journey: (
-        <>
-          <div className="win-title">经历与教育</div>
-          <div className="win-sub">~/journey</div>
-          <div className="turning-points">
-            {about.timeline.items
-              .slice()
-              .reverse()
-              .map((item) => (
-                <div className="tp-item" key={item.date + item.title}>
-                  <div className="tp-date">{item.date}</div>
-                  <div className="tp-title">
-                    {item.title} · {item.place}
-                  </div>
-                  <div className="tp-desc">{item.text}</div>
-                </div>
-              ))}
-          </div>
-        </>
-      ),
-      projects: (
-        <>
-          <div className="win-title">项目文件夹</div>
-          <div className="win-sub">~/works · {projects.length} 个精选项目</div>
-          <div className="folder-grid">
-            {projects.map((p) => (
-              <div className="folder-row" key={p.slug}>
-                <div>
-                  {p.icon} {p.title}
-                </div>
-                <div className="fr-sub">{p.subtitle}</div>
-              </div>
-            ))}
-          </div>
-          <div className="win-links" style={{ marginTop: 18 }}>
-            <button type="button" className="win-link" onClick={onGoWorks}>
-              打开项目页 →
-            </button>
-          </div>
-        </>
-      ),
-      research: (
-        <>
-          <div className="win-title">研究实验</div>
-          <div className="win-sub">~/practice</div>
-          <div className="folder-grid">
-            {research.map((r) => (
-              <div className="folder-row" key={r.title}>
-                <a href={r.url} target="_blank" rel="noreferrer noopener">
-                  🔬 {r.title}
-                </a>
-                <div className="fr-sub">{r.text}</div>
-              </div>
-            ))}
-          </div>
-        </>
-      ),
-      sayhi: (
-        <>
-          <div className="win-title">Say Hi</div>
-          <div className="win-sub">{'// 聊聊新的可能'}</div>
-          <p className="win-body-text">关于项目、研究或工作机会，欢迎写信，或到 GitHub 找我。</p>
-          <div className="win-links">
-            <a href={`mailto:${profile.email}`}>{profile.email}</a>
-            <a href={profile.github} target="_blank" rel="noreferrer noopener">
-              github.com/yanxiaoxiang123
-            </a>
-          </div>
-          <p style={{ color: 'var(--ink-faint)', marginTop: 22, fontSize: 12, fontStyle: 'italic' }}>
-            {contactInfo.quote}
-          </p>
-        </>
-      ),
-      backing: <ProjectWindow slug="backing" />,
-      patent: <ProjectWindow slug="patent" />,
-      logistics: <ProjectWindow slug="logistics" />,
-    }),
-    [onGoWorks],
-  );
 
   return (
     <div className="desktop">
@@ -481,7 +198,7 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
             {m}
           </span>
         ))}
-        <Clock />
+        <Clock running={running} />
       </div>
 
       <div className="desktop-surface" ref={surfaceRef} onClick={burst}>
@@ -507,88 +224,24 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
         ))}
 
         <div className="desktop-icons">
-          {ICONS.map((icon) => {
-            const p = posOf(icon.id);
-            return (
-              <button
-                key={icon.id}
-                type="button"
-                className={`dicon${activeIcon === icon.id ? ' dragging' : ''}`}
-                style={{
-                  left: p.x,
-                  top: p.y,
-                  visibility: size.w ? 'visible' : 'hidden',
-                  zIndex: activeIcon === icon.id ? 30 : 2,
-                }}
-                onPointerDown={(e) => startDrag(e, icon.id)}
-                onPointerMove={moveDrag}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (suppressClick.current) {
-                    suppressClick.current = false;
-                    return;
-                  }
-                  iconClick(icon);
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="dicon-img"
-                  src={`/images/apps/${icon.icon}.png`}
-                  alt=""
-                  draggable={false}
-                />
-                <span className="dicon-label">{icon.label}</span>
-              </button>
-            );
-          })}
-          {repoDetails.map((r) => {
-            const id = 'repo:' + r.name;
-            const p = posOf(id);
-            return (
-              <button
-                key={id}
-                type="button"
-                className={`dicon dicon-repo${activeIcon === id ? ' dragging' : ''}`}
-                style={{
-                  left: p.x,
-                  top: p.y,
-                  visibility: size.w ? 'visible' : 'hidden',
-                  zIndex: activeIcon === id ? 30 : 2,
-                }}
-                onPointerDown={(e) => startDrag(e, id)}
-                onPointerMove={moveDrag}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (suppressClick.current) {
-                    suppressClick.current = false;
-                    return;
-                  }
-                  openRepo(r.name);
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="dicon-repo-img"
-                  src={`/images/repos/${r.icon}.png`}
-                  alt=""
-                  draggable={false}
-                />
-                <span className="dicon-label">{r.name}</span>
-              </button>
-            );
-          })}
+          {ICONS.map(icon => (
+            <DesktopIcon key={icon.id} id={icon.id} label={icon.label}
+              image={`/images/apps/${icon.icon}.png`} initial={posOf(icon.id)} area={size}
+              running={running} onOpen={() => openWin(icon.win)} onEvent={tellPet} />
+          ))}
+          {repositories.map(repo => (
+            <DesktopIcon key={`repo:${repo.name}`} id={`repo:${repo.name}`} label={repo.name}
+              image={`/images/repos/${repo.icon}.png`} repository initial={posOf(`repo:${repo.name}`)}
+              area={size} running={running} onOpen={() => openRepo(repo.name)} onEvent={tellPet} />
+          ))}
         </div>
 
-        <Xiaojing area={size} event={petEvent} />
+        <Xiaojing area={size} event={petEvent} running={running} reducedMotion={reducedMotion} />
 
         {wins.map((w) => (
-          <Window
+          <DesktopWindow
             key={w.key}
+            running={running}
             id={w.id}
             title={w.repo ?? w.id}
             initial={{ x: w.x, y: w.y }}
@@ -596,8 +249,13 @@ export default function DesktopOS({ onGoWorks }: { onGoWorks: () => void }) {
             onClose={() => closeWin(w.key)}
             onFocus={() => focusWin(w.key)}
           >
-            {w.id === 'repo' && w.repo ? <RepoWindow name={w.repo} /> : (content[w.id] ?? null)}
-          </Window>
+            {content[w.key] ?? null}
+            {w.id === 'projects' && (
+              <div className="win-links" style={{ marginTop: 18 }}>
+                <button type="button" className="win-link" onClick={onGoWorks}>打开项目页 →</button>
+              </div>
+            )}
+          </DesktopWindow>
         ))}
 
         <div className="scroll-on-hint">向下滑动，和这里说再见</div>

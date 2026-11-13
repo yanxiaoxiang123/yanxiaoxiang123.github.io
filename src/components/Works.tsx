@@ -57,6 +57,7 @@ const TK_STICKERS = [
 
 const stickerUrl = (name: string) => `/images/stickers/${name}.png`;
 
+/** Server component: only each draggable Sticker is a client island. */
 export default function Works() {
   return (
     <div className="works-page" id="works-top">
@@ -92,6 +93,10 @@ export default function Works() {
                   <span key={s}>{s}</span>
                 ))}
               </div>
+              <details className="fx-details">
+                <summary>项目详情</summary>
+                <ul>{p.points.map(point => <li key={point}>{point}</li>)}</ul>
+              </details>
             </div>
 
             <div className="fx-shot">

@@ -59,6 +59,49 @@ a {
   display: block;
 }
 
+/* Page selection, retained mounts and animation playback are independent. */
+.portfolio [hidden] {
+  display: none !important;
+}
+.portfolio [data-motion='false'] *,
+.portfolio [data-motion='false'] *::before,
+.portfolio [data-motion='false'] *::after {
+  animation-play-state: paused !important;
+}
+.portfolio:not(.is-enhanced) .tab-page {
+  display: block;
+}
+.portfolio:not(.is-enhanced) * {
+  animation: none !important;
+}
+.portfolio:not(.is-enhanced) .term-line {
+  opacity: 1;
+  transform: none;
+}
+.portfolio:not(.is-enhanced) .macbook-screen {
+  height: auto;
+  min-height: 440px;
+}
+.portfolio:not(.is-enhanced) .pill-nav,
+.portfolio:not(.is-enhanced) .hero-cta {
+  display: none;
+}
+.static-nav {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 24px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--cream-dark);
+}
+.static-nav a {
+  white-space: nowrap;
+}
+
 /* ---------- pill navigation ---------- */
 .pill-nav {
   z-index: 1000;
@@ -119,7 +162,7 @@ a {
 }
 .transition-overlay.active {
   opacity: 1;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 /* ---------- hero: macbook + terminal ---------- */
@@ -324,6 +367,10 @@ a {
   opacity: 1;
 }
 .hero-cta .cta-text {
+  border: 0;
+  padding: 8px 12px;
+  background: transparent;
+  cursor: pointer;
   color: var(--ink-faint);
   letter-spacing: 1px;
   font-family: var(--mono);
@@ -686,6 +733,9 @@ a {
 }
 .dicon {
   position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
   pointer-events: auto;
   touch-action: none;
   cursor: grab;
@@ -735,7 +785,8 @@ a {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.dicon.dragging {
+.dicon[data-dragging='true'] {
+  z-index: 30;
   cursor: grabbing;
   background: rgba(255, 255, 255, 0.14);
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
@@ -823,13 +874,25 @@ a {
 }
 
 /* ---------- OS windows ---------- */
+/* Drag translation is isolated from the inner surface's entrance animation. */
+.os-window-position {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(520px, 88vw);
+}
+.dicon[data-dragging='true'],
+.os-window-position[data-dragging='true'],
+.sticker[data-dragging='true'] {
+  will-change: transform;
+}
 .os-window {
   background: var(--cream);
-  width: min(520px, 88vw);
+  width: 100%;
   z-index: 100;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
-  position: absolute;
+  position: relative;
   overflow: hidden;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
   animation: winPop 0.25s var(--ease-out);
@@ -1074,6 +1137,22 @@ a {
   position: relative;
   height: 400vh;
 }
+.exit-section:not(.is-animated) {
+  height: auto;
+}
+.exit-section:not(.is-animated) .exit-sticky {
+  position: relative;
+  height: auto;
+  min-height: 100svh;
+  padding: 80px 16px;
+}
+.exit-section:not(.is-animated) .exit-macbook-wrapper {
+  transform: none !important;
+  opacity: 1 !important;
+}
+.exit-section:not(.is-animated) .goodbye-screen {
+  opacity: 1 !important;
+}
 .exit-sticky {
   background: var(--cream);
   height: 100vh;
@@ -1272,6 +1351,25 @@ a {
   }
 }
 
+/* Sticker translation stays on the wrapper; authored rotation stays on the image. */
+.sticker {
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 20;
+}
+.sticker[data-dragging='true'] {
+  cursor: grabbing;
+  z-index: 60;
+}
+.sticker-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* ---------- works / projects ---------- */
 .works-page {
   max-width: 1060px;
@@ -1296,6 +1394,36 @@ a {
   max-width: 620px;
   font-size: 14px;
   line-height: 1.7;
+}
+
+/* Native details stay useful before hydration and with JavaScript disabled. */
+.fx-details {
+  position: relative;
+  z-index: 4;
+  margin-top: 16px;
+  color: var(--ink-light);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.fx-details summary {
+  width: fit-content;
+  color: var(--blue-deep);
+  font-weight: 600;
+  cursor: pointer;
+}
+.fx-details summary:focus-visible {
+  outline: 3px solid var(--blue-deep);
+  outline-offset: 4px;
+}
+.fx-details ul {
+  padding-left: 24px;
+  margin-top: 12px;
+}
+.fx-details li + li {
+  margin-top: 8px;
+}
+.fx-card:has(.fx-details[open]) .fx-pop {
+  opacity: 0;
 }
 
 /* --- Featured Projects --- */
@@ -1758,9 +1886,7 @@ a {
   .dicon-label {
     font-size: 10px;
   }
-  .os-window {
-    left: 4vw !important;
-    top: 104px !important;
+  .os-window-position {
     width: 92vw;
   }
   .goodbye-terminal {
@@ -1805,6 +1931,9 @@ a {
   .click-star,
   .os-window,
   .term-line.visible,
+  .fx-card,
+  .vibe-slot,
+  .tk-slot,
   .hero-cta .cta-arrow,
   .back-to-top .back-arrow {
     animation: none !important;
@@ -2005,16 +2134,21 @@ a {
   box-shadow: 0 16px 36px rgba(26, 26, 46, 0.12);
   transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
 }
-.flight.is-settled .fl-stop {
-  cursor: pointer;
-}
-.flight.is-settled .fl-stop:hover {
+.flight.is-settled .fl-stop:focus-within {
   z-index: 90 !important;
 }
-.flight.is-settled .fl-stop:hover .fl-card {
+.flight.is-settled .fl-stop:focus-within .fl-card {
   transform: translateY(-42px) scale(1.04);
-  box-shadow: 0 30px 60px rgba(26, 26, 46, 0.2);
-  border-color: rgba(43, 127, 216, 0.24);
+}
+@media (hover: hover) {
+  .flight.is-settled .fl-stop:hover {
+    z-index: 90 !important;
+  }
+  .flight.is-settled .fl-stop:hover .fl-card {
+    transform: translateY(-42px) scale(1.04);
+    box-shadow: 0 30px 60px rgba(26, 26, 46, 0.2);
+    border-color: rgba(43, 127, 216, 0.24);
+  }
 }
 .fl-pin {
   position: absolute;
@@ -2130,63 +2264,237 @@ a {
   border-color: transparent transparent rgba(26, 26, 46, 0.08) transparent;
 }
 
-.flight.is-static {
-  height: auto;
-  padding: 96px 24px 40px;
+/* Reading controls stay available throughout the desktop flight. */
+.fl-reading-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--ink);
 }
-.flight.is-static .flight-sticky {
-  position: static;
-  height: auto;
-  overflow: visible;
+.flight.has-js .fl-reading-entry {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  right: 32px;
+  z-index: 100;
 }
-.flight.is-static .fl-sky,
-.flight.is-static .fl-deco,
-.flight.is-static .fl-line,
-.flight.is-static .fl-plane,
-.flight.is-static .fl-paper {
-  display: none;
+.fl-read-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cream-dark);
+  color: var(--blue-deep);
+  font-family: var(--sans-sc);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  transition: transform 300ms var(--ease-out), background-color 300ms var(--ease-out);
 }
-.flight.is-static .fl-stop {
-  position: static;
-  width: min(680px, 100%);
-  margin: 0 auto 30px;
-  transform: none;
+.fl-card > .fl-read-button {
+  margin-top: 16px;
 }
-.flight.is-static .fl-card {
-  box-shadow: none;
+.flight.has-js .fl-card > .fl-read-button {
+  min-height: 60px; /* stays at least 44px high in the scaled desktop collage */
+}
+.fl-read-button:hover {
+  background: #e7eef7;
+}
+.fl-read-button:active {
+  transform: translateY(1px);
+}
+.fl-read-button:focus-visible,
+.fl-reader-body:focus-visible {
+  outline: 3px solid var(--blue-deep);
+  outline-offset: 4px;
 }
 
+/* Document flow is the fallback, the phone layout and the reduced-motion layout.
+   The plane and rail decorate the chapters; they never position the text. */
+.flight:not(.has-js) {
+  height: auto;
+  padding: 64px 16px 128px;
+  background: var(--cream);
+}
+.flight:not(.has-js) .flight-sticky {
+  position: relative;
+  height: auto;
+  max-width: 680px;
+  margin: 0 auto;
+  overflow: visible;
+}
+.flight:not(.has-js) .flight-sticky::before {
+  content: '';
+  position: absolute;
+  top: 64px;
+  bottom: 32px;
+  left: 0;
+  border-left: 2px dotted var(--blue);
+  opacity: 0.4;
+  pointer-events: none;
+}
+.flight:not(.has-js) .fl-reading-entry {
+  min-height: 48px;
+  padding-left: 80px;
+  margin-bottom: 32px;
+}
+.flight:not(.has-js) .fl-sky,
+.flight:not(.has-js) .fl-deco,
+.flight:not(.has-js) .fl-line,
+.flight:not(.has-js) .fl-paper {
+  display: none;
+}
+.flight:not(.has-js) .fl-plane {
+  top: 0;
+  left: 8px;
+  width: 64px;
+  margin: 0;
+  transform: rotate(115deg);
+  filter: none;
+  will-change: auto;
+  z-index: 1;
+}
+.flight:not(.has-js) .fl-stop {
+  position: relative;
+  width: 100%;
+  margin: 0 0 32px;
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+.flight:not(.has-js) .fl-stop:last-of-type {
+  margin-bottom: 0;
+}
+.flight:not(.has-js) .fl-card {
+  padding: 24px;
+  box-shadow: none;
+  transform: none;
+  overflow-wrap: anywhere;
+}
+.flight:not(.has-js) .fl-pin {
+  top: 32px;
+  left: -6px;
+  margin: 0;
+}
+.flight:not(.has-js) .section-label {
+  margin-bottom: 8px;
+  font-family: var(--sans-sc);
+  font-size: 14px;
+  line-height: 20px;
+}
+.flight:not(.has-js) .fl-title,
+.fl-reader .fl-title {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  text-wrap: balance;
+}
+.flight:not(.has-js) .fl-body,
+.flight:not(.has-js) :is(.fl-list, .fl-now, .fl-timeline) :is(b, span),
+.fl-reader .fl-body,
+.fl-reader :is(.fl-list, .fl-now, .fl-timeline) :is(b, span) {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 24px;
+  text-wrap: pretty;
+}
+.flight:not(.has-js) :is(.fl-list, .fl-now, .fl-timeline),
+.fl-reader :is(.fl-list, .fl-now, .fl-timeline) {
+  gap: 24px;
+}
+.flight:not(.has-js) :is(.fl-list, .fl-now, .fl-timeline) li,
+.fl-reader :is(.fl-list, .fl-now, .fl-timeline) li {
+  gap: 8px;
+  border: 0;
+  padding: 0;
+}
+.flight:not(.has-js) .fl-timeline .fl-date,
+.fl-reader .fl-timeline .fl-date {
+  color: var(--blue-deep);
+  font-family: var(--sans-sc);
+  font-size: 14px;
+  line-height: 20px;
+}
+.flight:not(.has-js) .todo-note,
+.fl-reader .todo-note {
+  margin-top: 24px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* Native modal: focus containment, Escape and inert background come from dialog. */
+.fl-reader {
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--cream);
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgba(26, 26, 46, 0.24);
+  overflow: hidden;
+}
+.fl-reader[open] {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+.fl-reader::backdrop {
+  background: rgba(26, 26, 46, 0.55);
+}
+.fl-reader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+}
+.fl-reader-header p {
+  font-size: 14px;
+  line-height: 20px;
+}
+.fl-reader-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 24px 16px;
+  background: var(--cream-dark);
+}
+.fl-reader-nav [aria-pressed='true'] {
+  background: var(--blue-deep);
+  color: white;
+}
+.fl-reader-body {
+  min-height: 0;
+  padding: 24px 32px 32px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.fl-reader-body:focus-visible {
+  outline-offset: -4px;
+}
 @media (width <= 768px) {
-  .flight {
-    height: 320vh;
+  .fl-reader-header,
+  .fl-reader-nav {
+    padding-left: 16px;
+    padding-right: 16px;
   }
-  .fl-stop {
-    width: 86vw;
-    margin-left: -43vw;
+  .fl-reader-body {
+    padding: 24px 16px;
   }
-  .fl-plane {
-    width: 96px;
-    margin-left: -48px;
-    margin-top: -28px;
-  }
-  .fl-paper {
-    width: 92vw;
-    height: 88%;
-    top: 6%;
-  }
-  .fl-card {
-    padding: 16px 16px 18px;
-  }
-  .fl-title {
-    font-size: 1.15rem;
-  }
-  .fl-title.sm {
-    font-size: 1.02rem;
-  }
-  .fl-body,
-  .fl-list span,
-  .fl-now span,
-  .fl-timeline span {
-    font-size: 11px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-read-button {
+    transition: none;
   }
 }

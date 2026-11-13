@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePausableTimeout } from '@/hooks/usePausableTimeout';
 
 export type PetEventKind = 'open' | 'close' | 'drag' | 'drop';
 export type PetEvent = { kind: PetEventKind; at: number };
@@ -53,16 +54,22 @@ const EVENT_LINES: Record<PetEventKind, string[]> = {
 export default function Xiaojing({
   area,
   event,
+  running,
+  reducedMotion,
 }: {
   area: { w: number; h: number };
   event: PetEvent | null;
+  running: boolean;
+  reducedMotion: boolean;
 }) {
   const [mode, setMode] = useState<Mode>('idle');
-  const [bubble, setBubble] = useState<string | null>(null);
+  const [modeVersion, setModeVersion] = useState(0);
+  const [bubble, setBubble] = useState<{ text: string; id: number } | null>(null);
+  const [queuedJump, setQueuedJump] = useState<number | null>(null);
 
   const petRef = useRef<HTMLDivElement>(null);
-  const bubbleTimer = useRef<number | null>(null);
-  const modeTimer = useRef<number | null>(null);
+  const pausedAt = useRef<number | null>(null);
+  const handledEvent = useRef<number | null>(null);
   const suppressClick = useRef(false);
   const dragInfo = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
 
@@ -79,9 +86,7 @@ export default function Xiaojing({
   });
 
   const say = useCallback((text: string) => {
-    setBubble(text);
-    if (bubbleTimer.current) window.clearTimeout(bubbleTimer.current);
-    bubbleTimer.current = window.setTimeout(() => setBubble(null), 2400);
+    setBubble(previous => ({ text, id: (previous?.id ?? 0) + 1 }));
   }, []);
 
   const play = useCallback(
@@ -91,10 +96,7 @@ export default function Xiaojing({
       setMode(next);
       st.current.busyUntil = performance.now() + ms;
       if (text) say(text);
-      if (modeTimer.current) window.clearTimeout(modeTimer.current);
-      modeTimer.current = window.setTimeout(() => {
-        if (!st.current.drag) setMode('idle');
-      }, ms);
+      setModeVersion(version => version + 1);
     },
     [say],
   );
@@ -107,8 +109,16 @@ export default function Xiaojing({
     });
   }, []);
 
-  useEffect(() => {
-    if (!event) return;
+  usePausableTimeout(() => setBubble(null), bubble ? 2400 : null, running, bubble?.id ?? 'no-bubble');
+  const emote = mode !== 'idle' && mode !== 'run-left' && mode !== 'run-right';
+  usePausableTimeout(() => { if (!st.current.drag) setMode('idle'); },
+    emote ? DURATION[mode] : null, running, modeVersion);
+  usePausableTimeout(() => { setQueuedJump(null); play('jump'); },
+    queuedJump === null ? null : 760, running, queuedJump ?? 'no-jump');
+
+  usePausableTimeout(() => {
+    if (!event || handledEvent.current === event.at) return;
+    handledEvent.current = event.at;
     const map: Record<PetEventKind, Mode> = {
       open: 'work',
       close: 'review',
@@ -117,15 +127,21 @@ export default function Xiaojing({
     };
     const line = EVENT_LINES[event.kind];
     const text = line[Math.floor(Math.random() * line.length)];
-    const t = window.setTimeout(() => play(map[event.kind], text), 0);
-    return () => window.clearTimeout(t);
-  }, [event, play]);
+    play(map[event.kind], text);
+  }, event ? 0 : null, running, event?.at ?? 'no-event');
 
   useEffect(() => {
     const pet = petRef.current;
-    if (!pet) return;
+    if (!running || !pet) return;
+    const petState = st.current;
     let raf = 0;
     let last = performance.now();
+    if (pausedAt.current !== null) {
+      const pausedFor = last - pausedAt.current;
+      st.current.busyUntil += pausedFor;
+      st.current.nextWander += pausedFor;
+      pausedAt.current = null;
+    }
 
     const petSize = () => (area.w > 0 && area.w <= 768 ? 112 : PET);
 
@@ -178,7 +194,7 @@ export default function Xiaojing({
         apply();
       }
 
-      if (s.ready && !s.drag) {
+      if (s.ready && !s.drag && !reducedMotion) {
         if (s.walking) {
           const dx = s.tx - s.x;
           const dy = s.ty - s.y;
@@ -201,12 +217,17 @@ export default function Xiaojing({
         }
       }
 
-      raf = requestAnimationFrame(loop);
+      if (!reducedMotion) raf = requestAnimationFrame(loop);
     };
 
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [area.w, area.h, play]);
+    loop(performance.now());
+    return () => {
+      cancelAnimationFrame(raf);
+      pausedAt.current = performance.now();
+      petState.drag = false;
+      dragInfo.current = null;
+    };
+  }, [area.w, area.h, play, running, reducedMotion]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -260,7 +281,7 @@ export default function Xiaojing({
     }
     const text = CLICK_LINES[Math.floor(Math.random() * CLICK_LINES.length)];
     play('wave', text);
-    window.setTimeout(() => play('jump'), 760);
+    setQueuedJump(performance.now());
   };
 
   return (
@@ -287,7 +308,7 @@ export default function Xiaojing({
     >
       {bubble ? (
         <span className="xiaojing-bubble" aria-hidden="true">
-          {bubble}
+          {bubble.text}
         </span>
       ) : null}
       {/* eslint-disable-next-line @next/next/no-img-element */}

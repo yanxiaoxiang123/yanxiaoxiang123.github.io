@@ -1,193 +1,107 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { introLines, progressBlocks, progressStepMs } from '@/data/content';
+import { useEffect, useRef, useState } from 'react';
+import { introLines, progressBlocks, progressStepMs } from '@/data/intro';
+import type { StartupPhase } from '@/lib/portfolio-state';
+import { usePausableTimeout } from '@/hooks/usePausableTimeout';
 
 type Row =
-  | { type: 'cmd'; text: string; typed: string; cursor?: boolean }
+  | { type: 'cmd'; text: string; typed: string }
   | { type: 'output'; prefix: string; text: string }
   | { type: 'gold'; prefix: string; text: string }
   | { type: 'blank' };
 
-export default function Terminal({
-  onLaunch,
-  onReady,
-}: {
-  onLaunch: () => void;
-  onReady?: () => void;
-}) {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [typingDone, setTypingDone] = useState(false);
-  const [launching, setLaunching] = useState(false);
-  const [blocks, setBlocks] = useState(-1);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const launched = useRef(false);
-
-  useEffect(() => {
-    const reduce =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (reduce) {
-      const t = setTimeout(() => {
-        setRows(
-          introLines.map((l) =>
-            l.type === 'cmd'
-              ? { type: 'cmd' as const, text: l.text, typed: l.text }
-              : l,
-          ),
-        );
-        setTypingDone(true);
-      }, 0);
-      timers.current.push(t);
-      return () => clearTimeout(t);
+const completeRows: Row[] = introLines.map(line => line.type === 'cmd' ? { ...line, typed: line.text } : line);
+// One timeline and one pending tick, rather than a timeout for every character.
+const frames: { at: number; rows: Row[] }[] = [{ at: 0, rows: [] }];
+let clock = 620;
+let timelineRows: Row[] = [];
+for (const line of introLines) {
+  if (line.type === 'cmd') {
+    const previous = timelineRows;
+    for (let i = 1; i <= line.text.length; i++) {
+      frames.push({ at: clock + i * 62,
+        rows: [...previous, { ...line, typed: line.text.slice(0, i) }] });
     }
+    timelineRows = [...previous, { ...line, typed: line.text }];
+    clock += line.text.length * 62 + 340;
+  } else {
+    timelineRows = [...timelineRows, line];
+    frames.push({ at: clock, rows: timelineRows });
+    clock += line.type === 'blank' ? 130 : 300;
+  }
+}
+frames.push({ at: clock + 200, rows: completeRows });
 
-    let cancelled = false;
-    const at = (ms: number, fn: () => void) => {
-      const t = setTimeout(() => {
-        if (!cancelled) fn();
-      }, ms);
-      timers.current.push(t);
-    };
+export default function Terminal({ phase, running, enhanced, reducedMotion, onLaunch, onReady, onBooted }: {
+  phase: StartupPhase;
+  running: boolean;
+  enhanced: boolean;
+  reducedMotion: boolean;
+  onLaunch: () => void;
+  onReady: () => void;
+  onBooted: () => void;
+}) {
+  const [frame, setFrame] = useState(0);
+  const [blocks, setBlocks] = useState(0);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const typing = phase === 'intro' && !reducedMotion;
+  const next = frames[frame + 1];
+  const done = reducedMotion || !next;
 
-    const CHAR_MS = 62; // typing speed per character
-    const AFTER_CMD = 340; // pause before the command's output
-    const LINE_MS = 300; // gap between output lines
-    const BLANK_MS = 130;
-
-    let clock = 620;
-    introLines.forEach((line) => {
-      if (line.type === 'cmd') {
-        const cmd = line.text;
-        const start = clock;
-        for (let i = 1; i <= cmd.length; i += 1) {
-          at(start + i * CHAR_MS, () => {
-            setRows((prev) => {
-              const next = prev.slice();
-              const idx = next.findIndex(
-                (r) => r.type === 'cmd' && r.text === cmd && r.typed.length < cmd.length,
-              );
-              const row: Row = { type: 'cmd', text: cmd, typed: cmd.slice(0, i) };
-              if (idx === -1) next.push(row);
-              else next[idx] = row;
-              return next;
-            });
-          });
-        }
-        clock = start + cmd.length * CHAR_MS + AFTER_CMD;
-      } else if (line.type === 'blank') {
-        at(clock, () => setRows((prev) => [...prev, { type: 'blank' }]));
-        clock += BLANK_MS;
-      } else if (line.type === 'output') {
-        const row: Row = { type: 'output', prefix: line.prefix, text: line.text };
-        at(clock, () => setRows((prev) => [...prev, row]));
-        clock += LINE_MS;
-      } else {
-        const row: Row = { type: 'gold', prefix: line.prefix, text: line.text };
-        at(clock, () => setRows((prev) => [...prev, row]));
-        clock += LINE_MS;
-      }
-    });
-
-    at(clock + 200, () => setTypingDone(true));
-
-    return () => {
-      cancelled = true;
-      timers.current.forEach(clearTimeout);
-      timers.current = [];
-    };
-  }, []);
-
-  const launch = useCallback(() => {
-    if (launched.current || !typingDone) return;
-    launched.current = true;
-    setLaunching(true);
-    setRows((prev) => [...prev, { type: 'output', prefix: '> ', text: 'launching...' }]);
-
-    let b = 0;
-    const tick = () => {
-      b += 1;
-      setBlocks(b);
-      if (b >= progressBlocks) {
-        setTimeout(onLaunch, 260);
-        return;
-      }
-      timers.current.push(setTimeout(tick, progressStepMs));
-    };
-    timers.current.push(setTimeout(tick, 420));
-  }, [onLaunch, typingDone]);
+  usePausableTimeout(() => setFrame(i => i + 1), typing && next ? next.at - frames[frame].at : null,
+    running, `typing:${frame}`);
+  usePausableTimeout(onReady, phase === 'intro' && done ? 0 : null, running, 'intro-ready');
+  usePausableTimeout(() => {
+    if (blocks === progressBlocks) onBooted();
+    else setBlocks(b => b + 1);
+  }, phase !== 'booting' ? null : reducedMotion ? 0
+    : blocks === progressBlocks ? 260 : blocks === 0 ? 420 : progressStepMs,
+  running, `boot:${blocks}`);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') launch();
+    if (!running || phase !== 'ready') return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.repeat || event.defaultPrevented) return;
+      if (!terminalRef.current?.getClientRects().length) return;
+      if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, dialog, [contenteditable]')) return;
+      onLaunch();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [launch]);
+  }, [running, phase, onLaunch]);
 
-  useEffect(() => {
-    if (typingDone) onReady?.();
-  }, [typingDone, onReady]);
-
-  const progressPct = blocks <= 0 ? 0 : Math.round((blocks / progressBlocks) * 100);
-
+  const rows = !enhanced || !typing ? completeRows : frames[frame].rows;
+  const launching = ['booting', 'zooming', 'covered'].includes(phase);
+  const progressPct = Math.round((blocks / progressBlocks) * 100);
   return (
-    <div className="terminal" aria-label="终端介绍">
+    <div className={`terminal${phase === 'zooming' || phase === 'covered' ? ' scale-through' : ''}`}
+      ref={terminalRef} aria-label="终端介绍">
       <div className="terminal-titlebar">
-        <span className="terminal-dot red" />
-        <span className="terminal-dot yellow" />
-        <span className="terminal-dot green" />
+        <span className="terminal-dot red" /><span className="terminal-dot yellow" /><span className="terminal-dot green" />
         <span className="terminal-title">yanxx@universe ~ zsh</span>
       </div>
-
-      <div aria-live="polite">
+      <div aria-live={running ? 'polite' : 'off'}>
         {rows.map((row, i) => {
-          const isLast = i === rows.length - 1;
-          if (row.type === 'blank') {
-            return (
-              <div key={i} className="term-line visible">
-                &nbsp;
-              </div>
-            );
-          }
-          if (row.type === 'cmd') {
-            return (
-              <div key={i} className="term-line visible">
-                <span className="term-prompt">$ </span>
-                <span className="term-cmd">{row.typed}</span>
-                {isLast && !launching ? <span className="cursor" /> : null}
-              </div>
-            );
-          }
-          if (row.type === 'gold') {
-            return (
-              <div key={i} className="term-line visible">
-                <span className="term-gold">
-                  {row.prefix}
-                  {row.text}
-                </span>
-              </div>
-            );
-          }
+          if (row.type === 'blank') return <div key={i} className="term-line visible">&nbsp;</div>;
+          if (row.type === 'cmd') return (
+            <div key={i} className="term-line visible">
+              <span className="term-prompt">$ </span><span className="term-cmd">{row.typed}</span>
+              {i === rows.length - 1 && !launching ? <span className="cursor" /> : null}
+            </div>
+          );
           return (
             <div key={i} className="term-line visible">
-              <span className="term-output">
-                {row.prefix}
-                {row.text}
-              </span>
+              <span className={row.type === 'gold' ? 'term-gold' : 'term-output'}>{row.prefix}{row.text}</span>
             </div>
           );
         })}
-
-        {launching && blocks >= 0 ? (
-          <div className="term-line visible">
-            <span className="term-progress">
-              [{'█'.repeat(blocks)}
-              {'░'.repeat(progressBlocks - blocks)}] {progressPct}%
-            </span>
-          </div>
-        ) : null}
+        {launching && <>
+          <div className="term-line visible"><span className="term-output">&gt; launching...</span></div>
+          <div className="term-line visible"><span className="term-progress">
+            [{'█'.repeat(blocks)}{'░'.repeat(progressBlocks - blocks)}] {progressPct}%
+          </span></div>
+        </>}
       </div>
     </div>
   );

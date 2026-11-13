@@ -66,6 +66,16 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # 固定文件名图片：缓存 1 小时，过期后必须重新校验
+    # 对应 ops/nginx/images-cache.conf；不要设置一年 immutable
+    location ^~ /images/ {
+        expires off;
+        etag on;
+        if_modified_since exact;
+        add_header Cache-Control "public, max-age=3600, must-revalidate";
+        try_files $uri =404;
+    }
+
     # App Router 导出：未知路径回落到 404 页
     error_page 404 /404.html;
     location = /404.html {
@@ -77,6 +87,15 @@ server {
     }
 }
 ```
+
+### 图片缓存的更新行为
+
+`ops/nginx/images-cache.conf` 是图片缓存规则的可复用片段，放在站点的 `server` 块中；更新前先备份 `/etc/nginx/conf.d/yanxx.conf`，通过 `nginx -t` 后再重载。
+
+- `/images/` 使用 `Cache-Control: public, max-age=3600, must-revalidate`。浏览器可直接复用 1 小时，过期后通过 ETag 或 Last-Modified 重新校验；未变化时返回 304。
+- 图片文件名固定，因此不用一年 `immutable`。同名图片更新后，已缓存浏览器可能最多继续使用旧图片 1 小时；需要立即更新时应更换 URL 或显式更新资源版本。
+- 图片的 HEAD、Range 请求和缺失文件的 404 保持可用；首页不套用这段缓存规则，`/_next/static/` 的一年缓存保持独立。
+- GitHub Pages 不使用自有服务器的 Nginx 配置，这段规则只影响自有服务器。
 
 ### 3. 重载
 

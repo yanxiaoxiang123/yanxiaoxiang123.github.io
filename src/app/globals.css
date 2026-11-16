@@ -1152,6 +1152,7 @@ a {
 }
 .exit-section:not(.is-animated) .goodbye-screen {
   opacity: 1 !important;
+  visibility: visible;
 }
 .exit-sticky {
   background: var(--cream);
@@ -1229,6 +1230,10 @@ a {
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
+  visibility: hidden;
+}
+.goodbye-screen.visible {
+  visibility: visible;
 }
 .goodbye-titlebar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -2065,7 +2070,7 @@ a {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow: clip;
   background: transparent;
 }
 .fl-sky {

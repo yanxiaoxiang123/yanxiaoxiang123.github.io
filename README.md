@@ -34,7 +34,13 @@ npm run dev
 npm run build
 ```
 
-产物在 `out/`，可直接部署到任意静态主机。
+产物在 `out/`，可直接部署到任意静态主机。构建与部署打包共用本地锁，防止读取尚在生成的产物；失败构建必须成功重建后才能发布，详见 [部署与回滚](docs/DEPLOY.md)。本项目使用 `output: 'export'`，不支持 `next start`；构建后可用 Python 3 在本机预览静态产物：
+
+```bash
+python -m http.server 3001 --directory out --bind 127.0.0.1
+```
+
+打开 http://localhost:3001 。
 
 ## 检查
 
@@ -55,6 +61,6 @@ npm run typecheck
 ## 部署
 
 - **GitHub Pages**：推送到 `main` 后由 `.github/workflows/deploy.yml` 自动构建并发布。
-- **自有服务器**：见 `docs/DEPLOY.md` 与 `scripts/deploy.sh`。
+- **自有服务器**：`scripts/deploy.sh` 将完整产物上传到独立目录，持锁校验后保留旧版本并切换；切换、重载或首页验证失败时自动恢复。依赖、参数、备份位置和异常恢复见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
 联系：s24150812056@smail.cczu.edu.cn · [GitHub](https://github.com/yanxiaoxiang123)

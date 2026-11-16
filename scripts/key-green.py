@@ -11,7 +11,7 @@ from PIL import Image, ImageFilter
 
 
 def key(src_path: str, out_path: str, pad_ratio: float = 0.06) -> None:
-    src = Image.open(src_path).convert("RGB")
+    src = Image.open(src_path).convert("RGBA")
     w, h = src.size
     px = src.load()
     out = Image.new("RGBA", (w, h))
@@ -19,7 +19,7 @@ def key(src_path: str, out_path: str, pad_ratio: float = 0.06) -> None:
 
     for y in range(h):
         for x in range(w):
-            r, g, b = px[x, y]
+            r, g, b, src_alpha = px[x, y]
             excess = g - max(r, b)
             if excess <= 12:
                 a = 255
@@ -27,6 +27,8 @@ def key(src_path: str, out_path: str, pad_ratio: float = 0.06) -> None:
                 a = 0
             else:
                 a = int(255 * (1 - (excess - 12) / 58.0))
+            if src_alpha == 0:
+                a = 0
             if a > 0:
                 op[x, y] = (r, min(g, max(r, b)), b, a)
             else:
@@ -66,6 +68,9 @@ def key(src_path: str, out_path: str, pad_ratio: float = 0.06) -> None:
         for x in range(w):
             if not keep[row + x]:
                 ap[x, y] = 0
+            else:
+                # Select components before scaling so faint foreground survives.
+                ap[x, y] = ap[x, y] * px[x, y][3] // 255
 
     out.putalpha(alpha)
     bbox = out.getbbox()

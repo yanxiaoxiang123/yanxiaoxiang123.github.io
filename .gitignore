@@ -5,6 +5,8 @@ node_modules/
 .next/
 out/
 dist/
+.yanxx-build.lock/
+.yanxx-build-state
 
 # typescript
 *.tsbuildinfo

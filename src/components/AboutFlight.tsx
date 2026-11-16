@@ -106,6 +106,7 @@ export default function AboutFlight({ chapters, running: overrideRunning }: { ch
       cards.forEach((card) => {
         card?.style.removeProperty('transform');
         card?.style.removeProperty('z-index');
+        if (card) card.inert = false;
       });
       plane.style.removeProperty('transform');
       paper?.style.removeProperty('opacity');
@@ -224,6 +225,8 @@ export default function AboutFlight({ chapters, running: overrideRunning }: { ch
 
           card.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
           card.style.zIndex = `${20 - (gather > 0.45 ? i : Math.round(slot[i]))}`;
+          // Clipped cards cannot take focus; the persistent reader exposes every chapter.
+          card.inert = y < 0 || y + heights[i] * scale > vh;
 
           pins.push({ x, y });
         });

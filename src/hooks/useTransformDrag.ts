@@ -93,9 +93,22 @@ export function useTransformDrag<T extends HTMLElement>(ref: RefObject<T | null>
     };
   }, [ref]);
 
+  // Bounds can change after a resize even when the committed coordinates do not.
   useLayoutEffect(() => {
-    if (!session.current) writer.current?.sync({ x, y });
-  }, [x, y]);
+    if (session.current) return;
+    const current = optionsRef.current;
+    const element = ref.current;
+    let point = { x, y };
+    if (current.enabled && element && current.bounds) {
+      const limits = current.bounds(element);
+      point = {
+        x: Math.max(limits.minX, Math.min(limits.maxX, x)),
+        y: Math.max(limits.minY, Math.min(limits.maxY, y)),
+      };
+      if (point.x !== x || point.y !== y) current.onCommit(point);
+    }
+    writer.current?.sync(point);
+  });
   useLayoutEffect(() => {
     if (!options.enabled) finish('disabled');
   }, [options.enabled, finish]);

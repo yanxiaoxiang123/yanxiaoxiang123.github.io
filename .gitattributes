@@ -1,0 +1,2 @@
+# Shell programs must keep LF endings when checked out on Windows too.
+*.sh text eol=lf

@@ -61,6 +61,6 @@ npm run typecheck
 ## 部署
 
 - **GitHub Pages**：推送到 `main` 后由 `.github/workflows/deploy.yml` 自动构建并发布。
-- **自有服务器**：`scripts/deploy.sh` 将完整产物上传到独立目录，持锁校验后保留旧版本并切换；切换、重载或首页验证失败时自动恢复。依赖、参数、备份位置和异常恢复见 [docs/DEPLOY.md](docs/DEPLOY.md)。
+- **自有服务器**：`scripts/deploy.sh` 将完整产物上传到独立目录，持锁校验后保留旧版本并切换；切换、重载或首页验证失败时自动恢复。依赖、参数、备份位置和异常恢复见 [docs/DEPLOY.md](docs/DEPLOY.md)。域名入口为 https://yanxx.site/ ，证书、跳转和续期同样记录在该文档中。
 
 联系：s24150812056@smail.cczu.edu.cn · [GitHub](https://github.com/yanxiaoxiang123)

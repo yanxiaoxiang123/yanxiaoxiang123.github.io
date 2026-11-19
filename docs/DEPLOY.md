@@ -7,16 +7,58 @@
 | 目标 | 入口 | 发布方式 |
 | --- | --- | --- |
 | GitHub Pages | https://yanxiaoxiang123.github.io/ | 推送 `main` 后由 GitHub Actions 自动构建发布 |
-| 自有服务器 | http://43.142.9.102/ | 上传已验证的静态发布包，备份并切换站点目录 |
+| 自有服务器 | https://yanxx.site/（IP：http://43.142.9.102/） | 上传已验证的静态发布包，备份并切换站点目录 |
 
 推送仓库不会自动更新自有服务器。两处部署应记录各自的应用提交和验证结果；仅修改 Nginx 配置或部署文档时，不需要重新上传站点文件。
 
 当前自有服务器为 Rocky Linux 9.4、Nginx 1.20.1：
 
 - 站点目录：`/var/www/yanxx`。
-- 站点配置：`/etc/nginx/conf.d/yanxx.conf`，监听 HTTP 80，作为默认站点。
+- 站点配置：`/etc/nginx/conf.d/yanxx.conf`（HTTP 80 默认站点）和 `/etc/nginx/conf.d/yanxx-https.conf`（域名 443）。
 - 服务管理：systemd 管理 Nginx，已设置开机启动。
-- 当前使用 IP 访问；自有服务器尚未配置 HTTPS，域名仍受此前备案条件限制。域名和证书变更需要单独核实，不属于现有发布步骤。
+- 域名 `yanxx.site`、`www.yanxx.site` 已启用 HTTPS；IP 入口继续使用 HTTP。证书、跳转和续期见[域名与 HTTPS](#域名与-https)。
+
+## 域名与 HTTPS
+
+`yanxx.site` 和 `www.yanxx.site` 的 DNS A 记录都指向 `43.142.9.102`，两个域名均已启用 HTTPS；IP 入口 `http://43.142.9.102/` 继续使用 HTTP。证书不包含 IP，因此不提供 IP 的 HTTPS，浏览器直接访问 IP 的 443 会提示名称不匹配。
+
+| 项目 | 位置或值 |
+| --- | --- |
+| 443 站点 | `/etc/nginx/conf.d/yanxx-https.conf`：`listen 443 ssl http2`，TLS 1.2/1.3，站点根目录与 80 站点相同 |
+| HTTP 跳转 | `/etc/nginx/conf.d/yanxx.conf` 的 `server` 块内按 `$host` 判断：域名请求 301 到 HTTPS，IP 和其他 Host 继续返回站点内容 |
+| 证书链 | `/etc/nginx/ssl/yanxx.site/yanxx.site_bundle.pem`（644，含中间证书） |
+| 私钥 | `/etc/nginx/ssl/yanxx.site/yanxx.site.key`（600，仅 root 可读） |
+| 证书信息 | TrustAsia DV TLS RSA CA 2024 签发，覆盖 `yanxx.site`、`www.yanxx.site`，有效期至 2027-02-10（UTC） |
+
+- 私钥只保存在服务器和签发机构的交付包中，不进入 Git、发布包或文档。
+- HTTP 的 `/.well-known/acme-challenge/` 不参与跳转，保留以后使用 ACME 续签的可能。
+- `www` 与根域名返回同一站点内容，目前不做域名间跳转。
+- **公网 443 必须在云安全组（以及云防火墙，如有）中放行。** 2026-11-19 排障时，服务器本机访问 443 正常，但公网报文到不了主机：服务器抓包没有收到任何 443 报文，外部 SSL 检测也无法连接；放行入站 TCP 443 后恢复。遇到 HTTPS 超时但本机访问正常，先检查云侧规则，修改 Nginx 没有作用。
+- 主机上 firewalld 未启用、SELinux 为 Disabled；入站限制以云安全组为准。
+
+验证命令：
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://yanxx.site/
+```
+
+```bash
+curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' http://yanxx.site/
+```
+
+```bash
+curl -sSI https://yanxx.site/images/stickers/bull.png | grep -i cache-control
+```
+
+预期：HTTPS 首页返回 200，HTTP 域名返回 301 到对应 HTTPS 地址，图片仍返回 `public, max-age=3600, must-revalidate`；`openssl s_client -connect 43.142.9.102:443 -servername yanxx.site` 应显示 `Verify return code: 0 (ok)`。
+
+### 证书续期
+
+1. 从签发机构获取覆盖两个域名的新证书链和私钥，确认域名、有效期以及证书与私钥匹配。
+2. 备份 `/etc/nginx/ssl/yanxx.site/` 下的现有文件。
+3. 替换证书链和私钥，保持 644/600 权限；路径和文件名不变时无需修改 Nginx 配置。
+4. 执行 `nginx -t && systemctl reload nginx`，按本节命令验证两个域名、跳转和首页哈希。
+5. 更新本节记录的有效期。
 
 ## GitHub Pages 自动发布
 
@@ -124,6 +166,8 @@ DEPLOY_HOST=user@your-server.com DEPLOY_PATH=/var/www/yanxx bash scripts/deploy.
 脚本自动验证的是服务器发起的首页 HTTP 状态和内容哈希；发布后还需检查公网入口并记录结果：
 
 - 首页及首屏、延迟加载的 JS/CSS、图片可访问，内容与发布产物一致，JS/CSS 的 MIME 类型正确。
+- 域名 HTTPS：`https://yanxx.site/` 与 `https://www.yanxx.site/` 均返回 200，内容哈希与发布产物一致；`http://` 域名返回 301 到对应 HTTPS 地址。
+- IP 入口 `http://43.142.9.102/` 仍返回 200；IP 的 HTTPS 不在本证书范围内。
 - 不存在的路径返回 404。直接校验 `/404.html` 时应预期 404，并核对错误页内容。
 - 图片缓存头及条件请求正常；带哈希 JS/CSS 的长期缓存保持正常。
 - 根据应用变更检查浏览器交互，分别注明本地验证和线上验证范围。
@@ -132,7 +176,7 @@ DEPLOY_HOST=user@your-server.com DEPLOY_PATH=/var/www/yanxx bash scripts/deploy.
 
 ## Nginx 配置维护
 
-应用发布只切换站点目录，不覆盖 `/etc/nginx/conf.d/yanxx.conf`。修改 Nginx 时先读取并备份当前配置，在候选配置通过验证后替换、检查并平滑重载；失败时恢复配置备份并再次检查、重载。
+应用发布只切换站点目录，不覆盖 `/etc/nginx/conf.d/yanxx.conf` 或 `/etc/nginx/conf.d/yanxx-https.conf`。修改 Nginx 时先读取并备份当前配置，在候选配置通过验证后替换、检查并平滑重载；失败时恢复配置备份并再次检查、重载。
 
 配置备份保存在 `/etc/nginx/yanxx.conf.backup-<标识>` 等不被 `conf.d/*.conf` 自动加载的位置。保留现有站点中的其他配置，例如 ACME 路径处理；不要用最小示例整段覆盖生产配置。
 
